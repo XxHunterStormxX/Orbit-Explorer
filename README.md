@@ -1,39 +1,69 @@
 # ORbit Explorer
 
-**Junior Astronaut Mission Trainer | NASA Space Apps Challenge 2026**  
-**Team:** Orbit Sprint
+**A Space-Colony Survival and Strategy Game | NASA Space Apps Challenge Project**
 
-ORbit Explorer is an educational, browser-based Mars colony management game. Players operate the fictional **Base Ares Planitia** and make resource decisions involving food, water, oxygen, energy, science, crew size, research and infrastructure.
+ORbit Explorer is an educational space-colony management game prototype. Players make resource and survival decisions while developing a settlement on Mars. The project combines a playable HTML prototype with a presentation and supporting documentation.
 
-The central learning idea is trade-offs: each decision affects the colony. For example, expanding the crew increases science production but also increases life-support demand. Building infrastructure can improve production while requiring resources and energy.
+> **Project status:** Prototype. Features described as planned or under development are not necessarily implemented in the current game. NASA data integration is documented conservatively; simulated values and real external data must not be confused.
 
-## Play the game
+## Repository Guide
 
-Open [`index.html`](./index.html) in a modern browser, or use the published GitHub Pages URL once Pages has been enabled for this repository.
+This repository is organized so visitors, teammates, and evaluators can quickly find the playable prototype, understand the project, and review its supporting materials.
 
-## Project contents
+| Item | What it contains | Why it is here |
+|---|---|---|
+| `index.html` | The browser game prototype, including HTML, CSS, and JavaScript in one file. | Main playable entry point. |
+| `ORBITA EXPLORER - English.pdf` | The team's project presentation in PDF format. | **This is the presentation for reviewers.** It introduces the project, explains the problem and proposed solution, shows the game concept and features, and communicates the intended impact and next steps. |
+| `Documentação/` | Markdown documentation about the project, gameplay, implementation, scientific context, limitations, and submission information. | Provides written detail that does not fit into the presentation slides. |
+| `Referências/` | Sources and credits used by the project. | Helps readers identify external references, data sources, and third-party resources. |
+| `README.md` | This guide to the repository. | Starting point for anyone visiting the project. |
 
-- `index.html` — game prototype (HTML, CSS and JavaScript in one file).
-- `Documentation/` — project overview, gameplay, science/data notes and limitations.
-- `References/` — external sources and credits.
-- `Presentation/` — team presentation, if added to this repository.
+## How to Run the Game
 
-## NASA data and scientific scope
+1. Open the repository and select `index.html`.
+2. Download the file, or clone/download the repository.
+3. Open `index.html` in a modern web browser.
 
-The prototype includes an optional NASA DONKI CME Analysis data panel. When the browser can reach the NASA API, it requests recent CME analysis records and displays the latest available CME speed as contextual information. This is **not** a Mars weather forecast, a solar-wind measurement, or a radiation measurement at Mars. The game simulation does not automatically change based on DONKI records.
+The prototype is designed as a browser-based HTML game. If the project is published with GitHub Pages, the game can also be opened through the Pages website address.
 
-NASA OSDR is listed in the game as a research resource. The prototype does not currently retrieve OSDR data directly.
+## Project Presentation
 
-All resource rates, radiation-like indicators, event effects and colony outcomes inside the game are simplified game mechanics. They are not engineering specifications, medical advice, or operational mission-planning outputs.
+The PDF file **`ORBITA EXPLORER - English.pdf`** is the presentation deck.
 
-## Current status
+It is intended to give evaluators and other visitors a concise overview of the project. It should be read alongside the playable prototype and the Markdown files in `Documentação/`.
 
-This is a prototype intended to communicate an educational concept. See [`Documentation/IMPLEMENTATION_AND_LIMITATIONS.md`](Documentation/IMPLEMENTATION_AND_LIMITATIONS.md) for what is implemented and what remains future work.
+The presentation is a communication artifact: it explains the concept and the team's proposal. The actual implemented behavior should be verified in `index.html` and the implementation documentation.
+
+## Scientific Context and NASA Data
+
+The project explores space-colony survival and uses NASA-related scientific context. The prototype includes an attempted connection to NASA's DONKI service.
+
+A connection attempt or displayed fallback does not, by itself, prove that live NASA data is successfully retrieved or used to drive gameplay.
+
+Please consult the scientific-context and implementation documentation for the exact status, limitations, and source references. Values generated internally by the game are simulations, not NASA measurements.
+
+## Current Scope and Limitations
+
+- This repository contains a prototype, not a certified engineering simulator.
+- Simulated resource levels, hazards, and environmental indicators are gameplay mechanics.
+- External API availability may vary; fallback behavior should not be interpreted as live data.
+- Planned features and educational goals should be distinguished from features currently implemented.
+- The project should not be used for real mission planning or operational decisions.
+
+## Suggested Review Order
+
+1. Read this `README.md`.
+2. Open `ORBITA EXPLORER - English.pdf` for the project presentation.
+3. Play `index.html`.
+4. Read the files in `Documentação/` for technical and scientific details.
+5. Review `Referências/` for sources and credits.
 
 ## Team
 
-Orbit Sprint
+**Orbit Sprint**
 
-## License
+This repository is part of the team's NASA Space Apps Challenge project work. Please refer to the presentation and team documentation for the team's project framing and contributor information.
 
-No open-source license has been specified yet. Unless a license is added, the repository's contents should not be assumed to be available for reuse. Review the licenses of any third-party assets or libraries before redistribution.
+---
+
+*ORbit Explorer — Because every colony deserves a plan to survive.*
