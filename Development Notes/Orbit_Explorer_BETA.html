@@ -193,26 +193,38 @@
     @keyframes shield-stripes { to { background-position: 22.6px 0; } }
     /* ===== ABERTURA ===== */
     .intro-text { position: absolute; z-index: 2; left: 0; right: 0; top: 24%; text-align: center; padding: 0 16px; opacity: 0; transition: opacity .6s; pointer-events: none; }
-    .intro-t1 { animation: intro-fade 2.6s .6s both; }
+    #intro.playing .intro-t1 { animation: intro-fade 2.6s .6s both; }
+    .intro-start { position: absolute; z-index: 2; left: 0; right: 0; top: 40%; text-align: center; font-family: 'Press Start 2P', monospace;
+      font-size: clamp(16px, 3vw, 24px); color: #ffd000; text-shadow: 0 3px 0 #d95b00; animation: start-blink 1s steps(2) infinite; }
+    @keyframes start-blink { 50% { opacity: 0; } }
+    #intro.playing .intro-start { display: none; }
+    .intro-skip { display: none; }
+    #intro.playing .intro-skip { display: block; }
     .intro-t2 { top: 42%; }
     #intro.step2 .intro-t2 { opacity: 1; }
     @keyframes intro-fade { 0% { opacity: 0; } 20%, 80% { opacity: 1; } 100% { opacity: 0; } }
     .intro-big { font-family: 'Press Start 2P', monospace; font-size: clamp(18px, 4.5vw, 40px); line-height: 1.5; color: #ffd000; text-shadow: 0 4px 0 #d95b00; }
     .intro-small { margin-top: 18px; font-family: 'Press Start 2P', monospace; font-size: clamp(10px, 1.6vw, 14px); color: #7bd0ff; letter-spacing: .2em; }
     .intro-mid { font-size: clamp(18px, 3vw, 28px); font-weight: 700; color: #fff; line-height: 1.5; }
-    .intro-rocket { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); animation: rocket-launch 3s .4s ease-in both; }
+    .intro-rocket { position: absolute; left: 50%; bottom: calc(22% + 30px); transform: translateX(-50%); }
+    .intro-pad { position: absolute; left: 50%; bottom: 22%; width: 150px; transform: translate(-50%, 30%); image-rendering: pixelated; }
+    #intro.playing .intro-pad { animation: pad-sink 3s .4s ease-in both; }
+    @keyframes pad-sink { to { transform: translate(-50%, calc(30% + 100vh)); } }
+    #intro:not(.playing) .intro-flame { display: none; }
+    #intro.playing .intro-rocket { animation: rocket-launch 3s .4s ease-in both; }
     .intro-rocket img { width: 102px; image-rendering: pixelated; display: block; }
-    .intro-flame { margin: -4px auto 0; width: 30px; height: 46px; background: linear-gradient(#ffe07a, #ff7a1a 60%, transparent);
+    .intro-flame { position: absolute; top: calc(100% - 4px); left: 50%; margin-left: -15px; width: 30px; height: 46px; background: linear-gradient(#ffe07a, #ff7a1a 60%, transparent);
       clip-path: polygon(0 0, 100% 0, 70% 100%, 50% 70%, 30% 100%); animation: flame-flicker .1s steps(2) infinite; }
     @keyframes flame-flicker { 50% { transform: scaleY(.75); } }
     @keyframes rocket-launch {
       0% { transform: translate(-50%, 0); } 6% { transform: translate(calc(-50% - 3px), 0); } 12% { transform: translate(calc(-50% + 3px), 0); }
       18% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -130vh); }
     }
-    .intro-smoke { position: absolute; left: 50%; bottom: 4%; width: 0; }
-    .intro-smoke span { position: absolute; bottom: 0; width: 26px; height: 26px; background: rgba(200, 190, 195, .55); opacity: 0; animation: smoke-puff 1.6s .6s ease-out both; }
-    .intro-smoke span:nth-child(1) { --dx: -90px; } .intro-smoke span:nth-child(2) { --dx: -45px; animation-delay: .7s; }
-    .intro-smoke span:nth-child(3) { --dx: 45px; animation-delay: .8s; } .intro-smoke span:nth-child(4) { --dx: 90px; animation-delay: .65s; }
+    .intro-smoke { position: absolute; left: 50%; bottom: calc(22% + 20px); width: 0; }
+    .intro-smoke span { position: absolute; bottom: 0; width: 26px; height: 26px; background: rgba(200, 190, 195, .55); opacity: 0; }
+    #intro.playing .intro-smoke span { animation: smoke-puff 1.6s .6s ease-out both; }
+    .intro-smoke span:nth-child(1) { --dx: -90px; } .intro-smoke span:nth-child(2) { --dx: -45px; }
+    .intro-smoke span:nth-child(3) { --dx: 45px; } .intro-smoke span:nth-child(4) { --dx: 90px; }
     @keyframes smoke-puff { 0% { opacity: .8; transform: translate(-13px, 0) scale(.4); } 100% { opacity: 0; transform: translate(calc(var(--dx) - 13px), -30px) scale(2.2); } }
     .intro-skip { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 12px; color: #6b6470; }
     #intro.intro-out { opacity: 0; transition: opacity .6s; pointer-events: none; }
@@ -355,7 +367,8 @@
   </div>
 
   <!-- ABERTURA: foguete decolando + NASA Space Apps + equipe; clique ou tecla pula -->
-  <div class="fixed inset-0 z-[70] overflow-hidden cursor-pointer" id="intro" onclick="finishIntro()">
+  <div class="fixed inset-0 z-[70] overflow-hidden cursor-pointer" id="intro" onclick="introClick()">
+    <p class="intro-start" id="intro-start">CLICK TO START</p>
     <div class="intro-text intro-t1">
       <p class="intro-big">NASA SPACE APPS<br>CHALLENGE</p>
       <p class="intro-small">PARTICIPANT PROJECT</p>
@@ -363,6 +376,7 @@
     <div class="intro-text intro-t2">
       <p class="intro-mid">A game developed by a team<br>of non-programmers</p>
     </div>
+    <img alt="" class="intro-pad" id="intro-pad-img">
     <div class="intro-smoke"><span></span><span></span><span></span><span></span></div>
     <div class="intro-rocket">
       <img alt="" id="intro-rocket-img">
@@ -1578,6 +1592,64 @@
         } catch (e) {}
       }
 
+      // Mini sintetizador de efeitos 8-bit: cada nota = [frequência, início (s), duração (s), onda, volume, frequência final]
+      function sfxNotes(notes) {
+        if (!sfxOn) return;
+        try {
+          initAudio();
+          if (!audioCtx) return;
+          const now = audioCtx.currentTime;
+          notes.forEach(([f, t, dur, type, vol, f2]) => {
+            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(f, now + t);
+            if (f2) osc.frequency.exponentialRampToValueAtTime(f2, now + t + dur);
+            g.gain.setValueAtTime(0.0001, now + t);
+            g.gain.exponentialRampToValueAtTime(vol, now + t + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + t + dur);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now + t); osc.stop(now + t + dur + 0.05);
+          });
+        } catch (e) {}
+      }
+      const SFX = {
+        sparkle: [[1047, 0, .15, 'square', .05], [1319, .08, .15, 'square', .05], [1568, .16, .15, 'square', .05], [2093, .24, .3, 'square', .05]],
+        chime: [[784, 0, .4, 'triangle', .12], [1175, .15, .6, 'triangle', .1]],
+        title: [[262, 0, .8, 'sawtooth', .05], [330, 0, .8, 'sawtooth', .04], [392, 0, .8, 'sawtooth', .04], [523, .12, 1, 'square', .05], [1047, .12, .3, 'square', .04, 2093]],
+        blip: [[660, 0, .06, 'square', .05], [990, .05, .08, 'square', .05]],
+        shieldOn: [[180, 0, .5, 'sawtooth', .07, 720], [360, .05, .45, 'triangle', .06, 1440]],
+        shieldOff: [[720, 0, .4, 'sawtooth', .06, 160]],
+        rocketDown: [[900, 0, 2.1, 'triangle', .04, 140]],
+        thud: [[110, 0, .35, 'sine', .3, 45]],
+        rocketUp: [[140, 0, 1.5, 'triangle', .04, 900]],
+        levelUp: [[523, 0, .15, 'square', .07], [659, .12, .15, 'square', .07], [784, .24, .15, 'square', .07], [1047, .36, .5, 'square', .08]]
+      };
+      const sfx = name => sfxNotes(SFX[name]);
+
+      // Ronco do motor do foguete na abertura (ruído grave que abre e some em ~3,4 s)
+      function playLaunchSfx() {
+        if (!sfxOn) return;
+        try {
+          initAudio();
+          if (!audioCtx) return;
+          const now = audioCtx.currentTime, len = 3.4;
+          const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * len), audioCtx.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          const src = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
+          src.buffer = buf;
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(150, now);
+          filter.frequency.exponentialRampToValueAtTime(900, now + 1.2);
+          filter.frequency.exponentialRampToValueAtTime(200, now + len);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.exponentialRampToValueAtTime(0.5, now + 0.6);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + len);
+          src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+          src.start(now); src.stop(now + len);
+        } catch (e) {}
+      }
+
       // Sirene que começa bem baixinha e cresce exponencialmente (sobe e desce 3 vezes, ~3 segundos)
       function playSiren() {
         if (!sfxOn) return;
@@ -1916,7 +1988,7 @@
         S.science -= cost;
         S.baseLevel++;
         S.capWater += 250; S.capFood += 250; S.capO2 += 250; S.capEnergy += 250;
-        playSound('upgrade');
+        sfx('levelUp');
         renderHUD();
       };
 
@@ -2238,12 +2310,25 @@
         renderHUD();
       };
 
-      // ---- Abertura: foguete + NASA Space Apps (0–3,4 s), equipe (3,4–6,4 s), depois o menu entra ----
-      let introActive = true;
-      const introTimers = [
-        setTimeout(() => document.getElementById('intro').classList.add('step2'), 3400),
-        setTimeout(() => finishIntro(), 6400)
-      ];
+      // ---- Abertura: CLICK TO START (o clique libera o som) -> foguete + NASA Space Apps (0–3,4 s),
+      // equipe (3,4–6,4 s), depois o menu entra. Depois de começar, outro clique/tecla pula ----
+      let introActive = true, introStarted = false, introTimers = [];
+      let launchAt = null, launchDone = false; // usados pelo fundo: Terra afundando e Marte crescendo
+      if (matchMedia('(pointer: coarse)').matches) document.getElementById('intro-start').textContent = 'TAP TO START';
+      window.introClick = function() {
+        if (introStarted) return finishIntro();
+        introStarted = true;
+        initAudio();
+        startBackgroundMusic();
+        playLaunchSfx();
+        launchAt = performance.now();
+        document.getElementById('intro').classList.add('playing');
+        introTimers = [
+          setTimeout(() => sfx('sparkle'), 900),                                                      // NASA Space Apps aparece
+          setTimeout(() => { document.getElementById('intro').classList.add('step2'); sfx('chime'); }, 3400), // equipe
+          setTimeout(() => finishIntro(), 6400)
+        ];
+      };
       window.finishIntro = function() {
         if (!introActive) return;
         introActive = false;
@@ -2254,11 +2339,16 @@
         const menu = document.getElementById('retro-menu-screen');
         menu.classList.remove('intro-pending');
         menu.classList.add('menu-enter');
+        launchDone = true;
+        // Sons do menu entrando: acorde no título e um blip para cada botão (mesmo ritmo da animação)
+        sfx('title');
+        menuOpts().forEach((b, i) => setTimeout(() => sfx('blip'), 900 + i * 150));
+        setTimeout(() => playMenuSfx('hover'), 1500);
       };
 
       // Atalhos de Teclado (Menu e Jogo)
       document.addEventListener('keydown', (e) => {
-        if (introActive) { finishIntro(); return; } // qualquer tecla pula a abertura
+        if (introActive) { introClick(); return; } // tecla começa a abertura (ou pula, se já começou)
         if (inMenu) {
           const settingsOpen = !document.getElementById('menu-settings-panel').classList.contains('hidden');
           const exitOpen = !document.getElementById('menu-exit-panel').classList.contains('hidden');
@@ -2323,7 +2413,7 @@
           return;
         }
         S.shieldActive = !S.shieldActive;
-        playSound('click');
+        sfx(S.shieldActive ? 'shieldOn' : 'shieldOff');
         if (S.shieldActive) {
           setTopAlert('success', 'SHIELD ACTIVATED', `Shield activated! Reducing radiation (-${drain.toFixed(1)} Energy/s).`);
         } else {
@@ -3292,36 +3382,45 @@
           }
         }
 
-        const marsCanvas = document.createElement('canvas');
-        const mctx = marsCanvas.getContext('2d');
+        // Planetas em pixel art: textura projetada numa esfera, com luz em faixas pontilhadas
         const bayer = [0, 0.5, 0.75, 0.25];
-        let R = 40, img = null;
+        const makePlanet = (tex, palette, atmo) => { const cv = document.createElement('canvas'); return { cv, ctx: cv.getContext('2d'), img: null, tex, palette, atmo }; };
+        const mars = makePlanet(tex, palette, [255, 140, 80]);
+        // Terra da abertura: mesma técnica com oceanos, continentes e gelo nos polos
+        const earthTex = new Uint8Array(TW * TH);
+        for (let ty = 0; ty < TH; ty++) {
+          for (let tx = 0; tx < TW; tx++) {
+            const n = noise(tx / TW * 5, ty / TH * 3 + 7, 5) * 0.6 + noise(tx / TW * 16, ty / TH * 8 + 3, 16) * 0.4;
+            earthTex[ty * TW + tx] = Math.abs(ty / TH - 0.5) > 0.42 ? 3 : n < 0.5 ? 0 : n < 0.56 ? 1 : 2;
+          }
+        }
+        const earth = makePlanet(earthTex, [[28, 72, 150], [44, 112, 190], [62, 150, 72], [238, 244, 250]], [120, 190, 255]);
+        let R = 40, earthR = 100;
 
-        // Projeta a textura numa esfera, com luz em faixas pontilhadas (estilo pixel art)
-        function drawMars(rot) {
-          const size = R * 2 + 4, c = R + 2;
-          if (marsCanvas.width !== size) { marsCanvas.width = marsCanvas.height = size; img = mctx.createImageData(size, size); }
-          const d = img.data;
+        function drawPlanet(P, radius, rot) {
+          const size = radius * 2 + 4, c = radius + 2;
+          if (P.cv.width !== size) { P.cv.width = P.cv.height = size; P.img = P.ctx.createImageData(size, size); }
+          const d = P.img.data;
           d.fill(0);
           for (let y = 0; y < size; y++) {
             for (let x = 0; x < size; x++) {
-              const nx = (x - c + 0.5) / R, ny = (y - c + 0.5) / R, r2 = nx * nx + ny * ny;
+              const nx = (x - c + 0.5) / radius, ny = (y - c + 0.5) / radius, r2 = nx * nx + ny * ny;
               const i = (y * size + x) * 4;
               if (r2 > 1) {
-                if (r2 < 1.09) { d[i] = 255; d[i + 1] = 140; d[i + 2] = 80; d[i + 3] = 70; } // atmosfera
+                if (r2 < 1.09) { d[i] = P.atmo[0]; d[i + 1] = P.atmo[1]; d[i + 2] = P.atmo[2]; d[i + 3] = 70; } // atmosfera
                 continue;
               }
               const nz = Math.sqrt(1 - r2);
               const lon = Math.atan2(nx, nz) + rot, lat = Math.asin(ny);
               const tx = ((Math.floor(lon / (Math.PI * 2) * TW) % TW) + TW) % TW;
               const ty = Math.min(TH - 1, Math.floor((lat / Math.PI + 0.5) * TH));
-              const col = palette[tex[ty * TW + tx]];
+              const col = P.palette[P.tex[ty * TW + tx]];
               const light = Math.max(0, -0.6 * nx - 0.4 * ny + 0.7 * nz);
               const b = Math.min(1, Math.floor(light * 4 + bayer[(y % 2) * 2 + (x % 2)]) / 4 + 0.15);
               d[i] = col[0] * b; d[i + 1] = col[1] * b; d[i + 2] = col[2] * b; d[i + 3] = 255;
             }
           }
-          mctx.putImageData(img, 0, 0);
+          P.ctx.putImageData(P.img, 0, 0);
           return c;
         }
 
@@ -3331,6 +3430,8 @@
           h = Math.ceil(window.innerHeight / PX);
           [gameCanvas, menuCanvas].forEach(cv => { cv.width = w; cv.height = h; });
           R = Math.round(Math.min(w, h) * 0.2);
+          earthR = Math.round(Math.max(w, h) * 0.6);
+          drawPlanet(earth, earthR, 0.8); // a Terra fica parada: desenha uma vez por tamanho de tela
           const colors = ['#ffffff', '#ffffff', '#7bd0ff', '#ffd000'];
           stars = Array.from({ length: Math.floor(w * h / 400) }, () => ({
             x: Math.floor(Math.random() * w), y: Math.floor(Math.random() * h),
@@ -3370,11 +3471,18 @@
             if (shoot.y > h * 0.6 || shoot.x < 0) shoot.active = false;
           }
 
-          // Marte girando
+          // Abertura: a Terra é o chão (horizonte em 78% da tela) e afunda enquanto o foguete sobe;
+          // Marte começa pequeno (o destino) e cresce até o tamanho do menu
+          const k = launchDone ? 1 : launchAt === null ? 0 : Math.min(1, Math.max(0, (performance.now() - launchAt - 400) / 3000));
+          const ease = k * k;
           ctx.globalAlpha = 1;
+          if (ease < 1) {
+            const ec = earthR + 2;
+            ctx.drawImage(earth.cv, Math.round(w / 2 - ec), Math.round(h * 0.78 + earthR + ease * h - ec));
+          }
           rot += 0.003;
-          const c = drawMars(rot);
-          ctx.drawImage(marsCanvas, Math.round(w * 0.88 - c), Math.round(h * 0.3 - c));
+          const c = drawPlanet(mars, Math.max(4, Math.round(R * (0.35 + 0.65 * ease))), rot);
+          ctx.drawImage(mars.cv, Math.round(w * 0.88 - c), Math.round(h * 0.3 - c));
         }
 
         resize();
@@ -3702,6 +3810,9 @@
           if (!pad) return;
           rocketAt = { x: pad.node.x, y: pad.node.y + 6 };
           rocketStart = performance.now() / 1000;
+          sfx('rocketDown');
+          setTimeout(() => sfx('thud'), 2200);
+          setTimeout(() => sfx('rocketUp'), 3400);
         };
 
         // Foguete em pixel art no estilo dos prédios (metal cinza, luzes laranja, contorno escuro), desenhado 1x num canvas
@@ -3718,7 +3829,10 @@
         const rocketImg = document.createElement('canvas');
         rocketImg.width = 17 * ROCKET_PX; rocketImg.height = ROCKET_MAP.length * ROCKET_PX;
         const rctx = rocketImg.getContext('2d');
-        setTimeout(() => { document.getElementById('intro-rocket-img').src = rocketImg.toDataURL(); }); // o mesmo foguete aparece na abertura
+        setTimeout(() => { // o mesmo foguete e a mesma estação de pouso aparecem na abertura
+          document.getElementById('intro-rocket-img').src = rocketImg.toDataURL();
+          document.getElementById('intro-pad-img').src = SPRITE_SOURCES.landing;
+        });
         ROCKET_MAP.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ROCKET_PAL[ch]) { rctx.fillStyle = ROCKET_PAL[ch]; rctx.fillRect(x * ROCKET_PX, y * ROCKET_PX, ROCKET_PX, ROCKET_PX); }
         }));
