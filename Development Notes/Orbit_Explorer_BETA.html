@@ -373,22 +373,12 @@
         <!-- Dificuldade -->
         <div class="space-y-2">
           <label class="font-pixel text-[10px] text-emerald-400 block">DIFFICULTY:</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button class="opt-btn" data-set="difficulty" data-val="easy" onclick="setOption('difficulty', 'easy')" type="button"><span class="material-symbols-outlined text-[16px]">star</span> EXPLORER (Easy)</button>
-            <button class="opt-btn" data-set="difficulty" data-val="normal" onclick="setOption('difficulty', 'normal')" type="button"><span class="material-symbols-outlined text-[16px]">rocket</span> ASTRONAUT (Normal)</button>
-          </div>
-          <p class="text-[11px] text-neutral-300 font-sans">In <strong>Explorer</strong> mode, resources last longer and dangers hurt less. <strong>Astronaut</strong> is the real challenge!</p>
-        </div>
-
-        <!-- Velocidade do jogo -->
-        <div class="space-y-2">
-          <label class="font-pixel text-[10px] text-emerald-400 block">GAME SPEED:</label>
           <div class="grid grid-cols-3 gap-2">
-            <button class="opt-btn" data-set="speed" data-val="slow" onclick="setOption('speed', 'slow')" type="button">SLOW</button>
-            <button class="opt-btn" data-set="speed" data-val="normal" onclick="setOption('speed', 'normal')" type="button">NORMAL</button>
-            <button class="opt-btn" data-set="speed" data-val="fast" onclick="setOption('speed', 'fast')" type="button">FAST</button>
+            <button class="opt-btn" data-set="difficulty" data-val="easy" onclick="setOption('difficulty', 'easy')" type="button"><span class="material-symbols-outlined text-[16px]">star</span><br>EXPLORER<br><span class="text-[11px]">Easy</span></button>
+            <button class="opt-btn" data-set="difficulty" data-val="normal" onclick="setOption('difficulty', 'normal')" type="button"><span class="material-symbols-outlined text-[16px]">rocket</span><br>ASTRONAUT<br><span class="text-[11px]">Normal</span></button>
+            <button class="opt-btn" data-set="difficulty" data-val="hard" onclick="setOption('difficulty', 'hard')" type="button"><span class="material-symbols-outlined text-[16px]">warning</span><br>COMMANDER<br><span class="text-[11px]">Hard</span></button>
           </div>
-          <p class="text-[11px] text-neutral-300 font-sans"><strong>Slow</strong> gives you more time to think. <strong>Fast</strong> makes everything happen quicker!</p>
+          <p class="text-[11px] text-neutral-300 font-sans"><strong>Explorer:</strong> the crew uses less and dangers hurt less. <strong>Astronaut:</strong> the real challenge. <strong>Commander:</strong> everything is 30% harder!</p>
         </div>
 
         <!-- Som -->
@@ -1648,19 +1638,17 @@
         document.getElementById('menu-exit-panel').classList.add('hidden');
       };
 
-      // ---- Configurações (dificuldade, velocidade, som) e jogo salvo: tudo fica no navegador ----
+      // ---- Configurações (dificuldade e som) e jogo salvo: tudo fica no navegador ----
       const SETTINGS_KEY = 'orbitSettings', SAVE_KEY = 'orbitSave';
-      const SPEEDS = { slow: 1500, normal: 1000, fast: 600 }; // milissegundos por segundo de jogo
-      let gameSpeed = 'normal', settingsOpen = false;
+      let settingsOpen = false;
 
       function saveSettings() {
-        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ difficulty: selectedDifficulty, speed: gameSpeed, music: musicOn, sfx: sfxOn })); } catch (e) {}
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ difficulty: selectedDifficulty, music: musicOn, sfx: sfxOn })); } catch (e) {}
       }
       try {
         const st = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
         if (st) {
-          if (st.difficulty) selectedDifficulty = st.difficulty;
-          if (SPEEDS[st.speed]) gameSpeed = st.speed;
+          if (['easy', 'normal', 'hard'].includes(st.difficulty)) selectedDifficulty = st.difficulty;
           musicOn = st.music !== false; sfxOn = st.sfx !== false;
         }
       } catch (e) {}
@@ -1688,7 +1676,7 @@
 
       // Marca a opção escolhida em cada grupo e mostra o resumo do jogo salvo
       function renderSettingsUI() {
-        const cur = { difficulty: selectedDifficulty, speed: gameSpeed };
+        const cur = { difficulty: selectedDifficulty };
         document.querySelectorAll('#menu-settings-panel [data-set]').forEach(b => {
           const k = b.dataset.set;
           if (k === 'music' || k === 'sfx') {
@@ -1708,7 +1696,6 @@
 
       window.setOption = function(key, val) {
         if (key === 'difficulty') { selectedDifficulty = val; S.difficulty = val; }
-        if (key === 'speed') gameSpeed = val;
         if (key === 'music') { musicOn = !musicOn; if (musicOn) { initAudio(); startBackgroundMusic(); } }
         if (key === 'sfx') sfxOn = !sfxOn;
         playMenuSfx('select');
@@ -1796,7 +1783,7 @@
       };
 
       function getModeDrainMultiplier() {
-        return S.difficulty === 'easy' ? 0.72 : 1.0;
+        return { easy: 0.72, normal: 1, hard: 1.3 }[S.difficulty] || 1; // Explorer / Astronaut / Commander
       }
 
       // Oxigênio respirado por astronauta (Air Filters reduz, mínimo 0.1)
@@ -2849,8 +2836,7 @@
         if (S.secondsAlive % 5 === 0) saveGame(); // salva sozinho a cada 5 segundos de jogo
         renderHUD();
       }
-      // Velocidade do jogo: Slow = 1 segundo de jogo a cada 1,5 s; Fast = a cada 0,6 s
-      (function tickLoop() { gameTick(); setTimeout(tickLoop, SPEEDS[gameSpeed]); })();
+      setInterval(gameTick, 1000);
 
       // Saiu do jogo (outra aba, app minimizado, tela bloqueada): som para, jogo pausa e salva
       document.addEventListener('visibilitychange', () => {
