@@ -191,6 +191,41 @@
     .shield-on .shield-switch { border-color: #7bd0ff; }
     .shield-on .shield-knob { left: 32px; background: #7bd0ff; }
     @keyframes shield-stripes { to { background-position: 22.6px 0; } }
+    /* ===== ABERTURA ===== */
+    .intro-text { position: absolute; z-index: 2; left: 0; right: 0; top: 24%; text-align: center; padding: 0 16px; opacity: 0; transition: opacity .6s; pointer-events: none; }
+    .intro-t1 { animation: intro-fade 2.6s .6s both; }
+    .intro-t2 { top: 42%; }
+    #intro.step2 .intro-t2 { opacity: 1; }
+    @keyframes intro-fade { 0% { opacity: 0; } 20%, 80% { opacity: 1; } 100% { opacity: 0; } }
+    .intro-big { font-family: 'Press Start 2P', monospace; font-size: clamp(18px, 4.5vw, 40px); line-height: 1.5; color: #ffd000; text-shadow: 0 4px 0 #d95b00; }
+    .intro-small { margin-top: 18px; font-family: 'Press Start 2P', monospace; font-size: clamp(10px, 1.6vw, 14px); color: #7bd0ff; letter-spacing: .2em; }
+    .intro-mid { font-size: clamp(18px, 3vw, 28px); font-weight: 700; color: #fff; line-height: 1.5; }
+    .intro-rocket { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); animation: rocket-launch 3s .4s ease-in both; }
+    .intro-rocket img { width: 102px; image-rendering: pixelated; display: block; }
+    .intro-flame { margin: -4px auto 0; width: 30px; height: 46px; background: linear-gradient(#ffe07a, #ff7a1a 60%, transparent);
+      clip-path: polygon(0 0, 100% 0, 70% 100%, 50% 70%, 30% 100%); animation: flame-flicker .1s steps(2) infinite; }
+    @keyframes flame-flicker { 50% { transform: scaleY(.75); } }
+    @keyframes rocket-launch {
+      0% { transform: translate(-50%, 0); } 6% { transform: translate(calc(-50% - 3px), 0); } 12% { transform: translate(calc(-50% + 3px), 0); }
+      18% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -130vh); }
+    }
+    .intro-smoke { position: absolute; left: 50%; bottom: 4%; width: 0; }
+    .intro-smoke span { position: absolute; bottom: 0; width: 26px; height: 26px; background: rgba(200, 190, 195, .55); opacity: 0; animation: smoke-puff 1.6s .6s ease-out both; }
+    .intro-smoke span:nth-child(1) { --dx: -90px; } .intro-smoke span:nth-child(2) { --dx: -45px; animation-delay: .7s; }
+    .intro-smoke span:nth-child(3) { --dx: 45px; animation-delay: .8s; } .intro-smoke span:nth-child(4) { --dx: 90px; animation-delay: .65s; }
+    @keyframes smoke-puff { 0% { opacity: .8; transform: translate(-13px, 0) scale(.4); } 100% { opacity: 0; transform: translate(calc(var(--dx) - 13px), -30px) scale(2.2); } }
+    .intro-skip { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 12px; color: #6b6470; }
+    #intro.intro-out { opacity: 0; transition: opacity .6s; pointer-events: none; }
+    /* Menu esperando a abertura terminar; depois o nome cresce e os botões entram um por um */
+    #retro-menu-screen.intro-pending h1, #retro-menu-screen.intro-pending #menu-options-list, #retro-menu-screen.intro-pending #btn-menu-music { opacity: 0; }
+    .menu-enter h1 { animation: title-in .9s cubic-bezier(.2, .8, .2, 1) both; }
+    @keyframes title-in { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
+    .menu-enter .menu-opt { animation: opt-in .45s steps(5) both; }
+    .menu-enter .menu-opt:nth-child(2) { animation-delay: .9s; } .menu-enter .menu-opt:nth-child(3) { animation-delay: 1.05s; }
+    .menu-enter .menu-opt:nth-child(4) { animation-delay: 1.2s; } .menu-enter .menu-opt:nth-child(5) { animation-delay: 1.35s; }
+    @keyframes opt-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    .menu-enter #menu-arrow, .menu-enter #btn-menu-music { animation: fade-in .4s 1.5s both; }
+    @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     .opt-btn { padding: 8px; border: 2px solid #525252; background: #171717; color: #d4d4d4; font-weight: 700; font-size: 13px; }
     .opt-btn.on { border-color: #34d399; background: rgba(52, 211, 153, .2); color: #fff; }
 
@@ -319,6 +354,23 @@
     <canvas class="w-full h-full block opacity-0 transition-opacity duration-300" id="space-bg-canvas"></canvas>
   </div>
 
+  <!-- ABERTURA: foguete decolando + NASA Space Apps + equipe; clique ou tecla pula -->
+  <div class="fixed inset-0 z-[70] overflow-hidden cursor-pointer" id="intro" onclick="finishIntro()">
+    <div class="intro-text intro-t1">
+      <p class="intro-big">NASA SPACE APPS<br>CHALLENGE</p>
+      <p class="intro-small">PARTICIPANT PROJECT</p>
+    </div>
+    <div class="intro-text intro-t2">
+      <p class="intro-mid">A game developed by a team<br>of non-programmers</p>
+    </div>
+    <div class="intro-smoke"><span></span><span></span><span></span><span></span></div>
+    <div class="intro-rocket">
+      <img alt="" id="intro-rocket-img">
+      <div class="intro-flame"></div>
+    </div>
+    <p class="intro-skip">Click or press any key to skip</p>
+  </div>
+
   <!-- AVISO DE RADIAÇÃO ALTA (acima de 75): símbolo nuclear + texto piscando no topo do mapa -->
   <div class="hidden fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3" id="rad-alert">
     <span class="material-symbols-outlined rad-alert-icon">radiology</span>
@@ -332,7 +384,7 @@
   </section>
 
   <!-- ==================== TELA INICIAL: MENU RETRO PIXEL ART (ORBIT EXPLORE) ==================== -->
-  <div class="fixed inset-0 z-50 bg-[#03050c] flex flex-col justify-between overflow-hidden" id="retro-menu-screen">
+  <div class="intro-pending fixed inset-0 z-50 bg-[#03050c] flex flex-col justify-between overflow-hidden" id="retro-menu-screen">
     <!-- Canvas Estrelado & Estrela Cadente -->
     <canvas class="absolute inset-0 w-full h-full pointer-events-none" id="menu-starfield"></canvas>
     <div class="absolute inset-0 scanlines pointer-events-none opacity-40"></div>
@@ -2186,8 +2238,27 @@
         renderHUD();
       };
 
+      // ---- Abertura: foguete + NASA Space Apps (0–3,4 s), equipe (3,4–6,4 s), depois o menu entra ----
+      let introActive = true;
+      const introTimers = [
+        setTimeout(() => document.getElementById('intro').classList.add('step2'), 3400),
+        setTimeout(() => finishIntro(), 6400)
+      ];
+      window.finishIntro = function() {
+        if (!introActive) return;
+        introActive = false;
+        introTimers.forEach(clearTimeout);
+        const intro = document.getElementById('intro');
+        intro.classList.add('intro-out');
+        setTimeout(() => intro.remove(), 600);
+        const menu = document.getElementById('retro-menu-screen');
+        menu.classList.remove('intro-pending');
+        menu.classList.add('menu-enter');
+      };
+
       // Atalhos de Teclado (Menu e Jogo)
       document.addEventListener('keydown', (e) => {
+        if (introActive) { finishIntro(); return; } // qualquer tecla pula a abertura
         if (inMenu) {
           const settingsOpen = !document.getElementById('menu-settings-panel').classList.contains('hidden');
           const exitOpen = !document.getElementById('menu-exit-panel').classList.contains('hidden');
@@ -3647,6 +3718,7 @@
         const rocketImg = document.createElement('canvas');
         rocketImg.width = 17 * ROCKET_PX; rocketImg.height = ROCKET_MAP.length * ROCKET_PX;
         const rctx = rocketImg.getContext('2d');
+        setTimeout(() => { document.getElementById('intro-rocket-img').src = rocketImg.toDataURL(); }); // o mesmo foguete aparece na abertura
         ROCKET_MAP.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ROCKET_PAL[ch]) { rctx.fillStyle = ROCKET_PAL[ch]; rctx.fillRect(x * ROCKET_PX, y * ROCKET_PX, ROCKET_PX, ROCKET_PX); }
         }));
