@@ -227,7 +227,12 @@
       .shield-switch { width: 46px; height: 22px; }
       .shield-knob { width: 16px; height: 12px; }
       .shield-on .shield-knob { left: 24px; }
-      main > nav button { padding: 6px 12px !important; }
+      /* Abas + escudo numa linha só: abas compactas e escudo só com ícone, chave e ON/OFF */
+      main > nav { flex-wrap: nowrap !important; gap: 6px !important; }
+      main > nav .screen-tab { padding: 6px 8px !important; }
+      .shield-label { display: none !important; }
+      #badge-shield { width: 28px; }
+      .opt-btn { padding: 8px 4px; font-size: 12px; }
       /* Janelas: menos margem; sub-abas do Build numa faixa que rola para o lado */
       .game-window { width: calc(100vw - 16px) !important; padding: 0 8px 8px !important; }
       .build-tabs-row { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 4px; }
@@ -362,7 +367,7 @@
     </div>
 
     <!-- Painel Pixel Art de SETTINGS (Configurações para Crianças) -->
-    <!-- Configurações: abre pelo menu e pelo botão de engrenagem no jogo; tudo fica salvo no navegador -->
+    <!-- Configurações: abre pelo SETTINGS do menu; tudo fica salvo no navegador -->
     <div class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" id="menu-settings-panel">
       <div class="pixel-box max-w-md w-full p-5 sm:p-6 flex flex-col gap-4 max-h-[95vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-amber/40 pb-3">
@@ -453,9 +458,6 @@
           </button>
           <button class="w-9 h-9 hover:bg-surface-high text-cyan flex items-center justify-center transition active:scale-95" onclick="toggleDataDrawer()" title="NASA Data" type="button">
             <span class="material-symbols-outlined text-[18px]">science</span>
-          </button>
-          <button class="w-9 h-9 hover:bg-surface-high text-neutral-300 flex items-center justify-center transition active:scale-95" onclick="openMenuSettings()" title="Settings" type="button">
-            <span class="material-symbols-outlined text-[18px]">settings</span>
           </button>
           <button class="w-9 h-9 hover:bg-surface-high text-amber flex items-center justify-center transition active:scale-95" onclick="returnToMenu()" title="Main Menu" type="button">
             <span class="material-symbols-outlined text-[18px]">home</span>
@@ -594,7 +596,7 @@
       <!-- ESCUDO DE RADIAÇÃO: interruptor da base, separado dos botões de coleta -->
       <button class="shield-btn ml-auto" id="btn-click-shield" onclick="toggleShield()" title="Radiation Shield [6]" type="button">
         <span class="material-symbols-outlined shield-btn-icon">shield</span>
-        <span class="flex flex-col items-start leading-tight">
+        <span class="shield-label flex flex-col items-start leading-tight">
           <span class="text-white text-sm">SHIELD <span class="hidden sm:inline text-neutral-400 text-xs">[6]</span></span>
           <span class="shield-info text-xs"><span class="text-[#34d399]">-5 Radiation/s</span> · <span class="text-[#ff4d4d]" id="shield-drain-info">Costs 20 Energy/s</span></span>
         </span>
@@ -3128,7 +3130,7 @@
           });
 
           const events = [
-            ...cmes.map(x => ({ type: 'CME', title: x.note || 'Coronal mass ejection', date: x.startTime || x.time21_5 || x.submissionTime, link: x.link })),
+            ...cmes.map(x => ({ type: 'CME', title: x.note ? (x.note.length > 90 ? x.note.slice(0, 90).trim() + '…' : x.note) : 'Coronal mass ejection', date: x.startTime || x.time21_5 || x.submissionTime, link: x.link })),
             ...flares.map(x => ({ type: 'FLR', title: `Solar flare ${x.classType || ''}`.trim(), date: x.beginTime || x.peakTime || x.submissionTime, link: x.link })),
             ...storms.map(x => ({ type: 'GST', title: 'Geomagnetic storm', date: x.startTime || x.submissionTime, link: x.link }))
           ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
@@ -3891,7 +3893,6 @@
           '...##..##..##...', '...#...##...#...', '..##...##...##..', '..#....##....#..', '.##..........##.',
           '.#.....##.....#.', '##............##', '################'
         ],
-        settings: ['....#.#....', '..#######..', '.##.....##.', '.#..###..#.', '##.#...#.##', '#..#...#..#', '##.#...#.##', '.#..###..#.', '.##.....##.', '..#######..', '....#.#....'],
         star: ['.....#.....', '.....#.....', '....###....', '###########', '.#########.', '..#######..', '..#######..', '.####.####.', '.###...###.', '##.......##']
       };
       // Nome antigo (Material Symbols) -> desenho pixel art
@@ -3940,7 +3941,6 @@
       })).observe(document.body, { subtree: true, childList: true, characterData: true });
 
       // Inicialização
-      document.body.appendChild(document.getElementById('menu-settings-panel')); // abre também durante o jogo
       refreshMenuContinue();
       renderSettingsUI();
       initSpaceBackground();
