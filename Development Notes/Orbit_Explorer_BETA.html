@@ -178,7 +178,7 @@
     .rad-alert-icon { font-size: 44px !important; color: #6bfa05; }
     .rad-alert-text { font-family: 'Press Start 2P', monospace; font-size: 20px; color: #6bfa05; text-shadow: 3px 3px 0 #000; }
     /* Botão do escudo: interruptor de painel (diferente dos cards de coleta) */
-    .shield-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px;
+    .shield-btn { display: flex; align-items: center; gap: 10px; padding: 5px 12px;
       font-weight: 700; color: #9fb3c8; background: #14181f; border: 3px solid #3b4a5a;
       box-shadow: inset 0 0 0 2px #0b0e13, 4px 4px 0 rgba(0, 0, 0, .6); cursor: pointer; }
     .shield-btn:hover { border-color: #7bd0ff; }
@@ -191,6 +191,8 @@
     .shield-on .shield-switch { border-color: #7bd0ff; }
     .shield-on .shield-knob { left: 32px; background: #7bd0ff; }
     @keyframes shield-stripes { to { background-position: 22.6px 0; } }
+    .opt-btn { padding: 8px; border: 2px solid #525252; background: #171717; color: #d4d4d4; font-weight: 700; font-size: 13px; }
+    .opt-btn.on { border-color: #34d399; background: rgba(52, 211, 153, .2); color: #fff; }
 
     /* ===== CELULAR (até 640px): tudo compacto para sobrar espaço para ver a base ===== */
     @media (max-width: 640px) {
@@ -218,10 +220,10 @@
       .click-card .mt-3 { margin-top: 4px; }
       .click-card h3.text-sm { font-size: 13px !important; }
       .click-card p.text-xs { font-size: 11px !important; margin-top: 0; }
-      .shield-btn { padding: 6px; gap: 4px; }
+      .shield-btn { padding: 4px 8px; gap: 6px; }
+      .shield-info { display: none; }
       .shield-btn-icon { font-size: 22px !important; }
       .shield-btn .text-sm { font-size: 13px !important; }
-      .shield-btn .text-xs { font-size: 11px !important; }
       .shield-switch { width: 46px; height: 22px; }
       .shield-knob { width: 16px; height: 12px; }
       .shield-on .shield-knob { left: 24px; }
@@ -352,37 +354,60 @@
       <!-- Opções Principais (START, SETTINGS, EXIT) com seta única que desliza até a opção selecionada -->
       <nav class="relative mt-12 sm:mt-14 flex flex-col items-center gap-6 font-pixel text-xl sm:text-2xl" id="menu-options-list">
         <span class="absolute left-0 top-0 text-amber pointer-events-none" id="menu-arrow"><span class="menu-arrow-bob inline-block">►</span></span>
-        <button class="menu-opt pixel-option-active transition cursor-pointer" data-index="0" onclick="startFromMenu()" onmouseenter="selectMenuIndex(0)" type="button">START</button>
-        <button class="menu-opt text-slate-300 transition cursor-pointer" data-index="1" onclick="openMenuSettings()" onmouseenter="selectMenuIndex(1)" type="button">SETTINGS</button>
-        <button class="menu-opt text-slate-400 transition cursor-pointer" data-index="2" onclick="openMenuExit()" onmouseenter="selectMenuIndex(2)" type="button">EXIT</button>
+        <button class="menu-opt hidden transition cursor-pointer" id="menu-continue" onclick="startFromMenu(true)" onmouseenter="menuHover(this)" type="button">CONTINUE</button>
+        <button class="menu-opt transition cursor-pointer" onclick="startFromMenu()" onmouseenter="menuHover(this)" type="button">NEW GAME</button>
+        <button class="menu-opt transition cursor-pointer" onclick="openMenuSettings()" onmouseenter="menuHover(this)" type="button">SETTINGS</button>
+        <button class="menu-opt transition cursor-pointer" onclick="openMenuExit()" onmouseenter="menuHover(this)" type="button">EXIT</button>
       </nav>
     </div>
 
     <!-- Painel Pixel Art de SETTINGS (Configurações para Crianças) -->
-    <div class="hidden fixed inset-0 z-20 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" id="menu-settings-panel">
-      <div class="pixel-box max-w-md w-full p-5 sm:p-6 flex flex-col gap-5">
+    <!-- Configurações: abre pelo menu e pelo botão de engrenagem no jogo; tudo fica salvo no navegador -->
+    <div class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" id="menu-settings-panel">
+      <div class="pixel-box max-w-md w-full p-5 sm:p-6 flex flex-col gap-4 max-h-[95vh] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-amber/40 pb-3">
-          <h2 class="font-pixel text-xs sm:text-sm text-amber">SETTINGS • MISSION</h2>
+          <h2 class="font-pixel text-xs sm:text-sm text-amber">SETTINGS</h2>
           <button class="font-pixel text-xs text-rose-400 hover:text-white cursor-pointer" onclick="closeMenuSettings()" type="button">[X]</button>
         </div>
 
-        <!-- Escolha de Dificuldade -->
+        <!-- Dificuldade -->
         <div class="space-y-2">
-          <label class="font-pixel text-[10px] text-emerald-400 block">DIFFICULTY LEVEL:</label>
-          <div class="grid grid-cols-2 gap-2.5 font-mono-code text-xs">
-            <button class="p-2.5 rounded border-2 border-emerald-400 bg-emerald-500/20 text-white font-bold transition cursor-pointer" id="set-diff-easy" onclick="setMenuDifficulty('easy')" type="button">
-              <span class="material-symbols-outlined text-[16px]">star</span> EXPLORER (Easy)
-            </button>
-            <button class="p-2.5 rounded border border-neutral-600 bg-neutral-900 text-neutral-300 font-bold transition cursor-pointer" id="set-diff-normal" onclick="setMenuDifficulty('normal')" type="button">
-              <span class="material-symbols-outlined text-[16px]">rocket</span> ASTRONAUT (Normal)
-            </button>
+          <label class="font-pixel text-[10px] text-emerald-400 block">DIFFICULTY:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="opt-btn" data-set="difficulty" data-val="easy" onclick="setOption('difficulty', 'easy')" type="button"><span class="material-symbols-outlined text-[16px]">star</span> EXPLORER (Easy)</button>
+            <button class="opt-btn" data-set="difficulty" data-val="normal" onclick="setOption('difficulty', 'normal')" type="button"><span class="material-symbols-outlined text-[16px]">rocket</span> ASTRONAUT (Normal)</button>
           </div>
-          <p class="text-[11px] text-neutral-300 font-sans">
-            In <strong>Explorer</strong> mode, resources last longer and dangers hurt less. <strong>Astronaut</strong> is the real challenge!
-          </p>
+          <p class="text-[11px] text-neutral-300 font-sans">In <strong>Explorer</strong> mode, resources last longer and dangers hurt less. <strong>Astronaut</strong> is the real challenge!</p>
         </div>
 
-        <button class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-black font-pixel text-xs rounded transition cursor-pointer" onclick="closeMenuSettings()" type="button">
+        <!-- Velocidade do jogo -->
+        <div class="space-y-2">
+          <label class="font-pixel text-[10px] text-emerald-400 block">GAME SPEED:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="opt-btn" data-set="speed" data-val="slow" onclick="setOption('speed', 'slow')" type="button">SLOW</button>
+            <button class="opt-btn" data-set="speed" data-val="normal" onclick="setOption('speed', 'normal')" type="button">NORMAL</button>
+            <button class="opt-btn" data-set="speed" data-val="fast" onclick="setOption('speed', 'fast')" type="button">FAST</button>
+          </div>
+          <p class="text-[11px] text-neutral-300 font-sans"><strong>Slow</strong> gives you more time to think. <strong>Fast</strong> makes everything happen quicker!</p>
+        </div>
+
+        <!-- Som -->
+        <div class="space-y-2">
+          <label class="font-pixel text-[10px] text-emerald-400 block">SOUND:</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="opt-btn" data-set="music" onclick="setOption('music')" type="button">Music: ON</button>
+            <button class="opt-btn" data-set="sfx" onclick="setOption('sfx')" type="button">Sound effects: ON</button>
+          </div>
+        </div>
+
+        <!-- Jogo salvo (só no menu) -->
+        <div class="space-y-2" id="set-save-row">
+          <label class="font-pixel text-[10px] text-emerald-400 block">SAVED GAME:</label>
+          <p class="text-[11px] text-neutral-300 font-sans" id="save-info">No saved game.</p>
+          <button class="opt-btn w-full disabled:opacity-40 disabled:cursor-not-allowed" id="btn-delete-save" onclick="deleteSave()" type="button">Delete saved game</button>
+        </div>
+
+        <button class="w-full py-3 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-pixel text-xs rounded transition cursor-pointer" onclick="closeMenuSettings()" type="button">
           SAVE & RETURN
         </button>
       </div>
@@ -438,6 +463,9 @@
           </button>
           <button class="w-9 h-9 hover:bg-surface-high text-cyan flex items-center justify-center transition active:scale-95" onclick="toggleDataDrawer()" title="NASA Data" type="button">
             <span class="material-symbols-outlined text-[18px]">science</span>
+          </button>
+          <button class="w-9 h-9 hover:bg-surface-high text-neutral-300 flex items-center justify-center transition active:scale-95" onclick="openMenuSettings()" title="Settings" type="button">
+            <span class="material-symbols-outlined text-[18px]">settings</span>
           </button>
           <button class="w-9 h-9 hover:bg-surface-high text-amber flex items-center justify-center transition active:scale-95" onclick="returnToMenu()" title="Main Menu" type="button">
             <span class="material-symbols-outlined text-[18px]">home</span>
@@ -568,11 +596,21 @@
   <main class="relative z-10 flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-5 flex flex-col justify-end gap-4">
 
     <!-- ABAS: CADA OPÇÃO EM UMA TELA -->
-    <nav class="order-last flex flex-wrap gap-2 font-mono-code text-xs font-bold" role="tablist">
+    <nav class="order-last flex flex-wrap items-center gap-2 font-mono-code text-xs font-bold" role="tablist">
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="base" onclick="showScreen('base')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">shield</span> Base</button>
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="upgrades" onclick="showScreen('upgrades')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">domain</span> Build</button>
       
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="dados" onclick="showScreen('dados')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">chart-bar</span> Data</button>
+      <!-- ESCUDO DE RADIAÇÃO: interruptor da base, separado dos botões de coleta -->
+      <button class="shield-btn ml-auto" id="btn-click-shield" onclick="toggleShield()" title="Radiation Shield [6]" type="button">
+        <span class="material-symbols-outlined shield-btn-icon">shield</span>
+        <span class="flex flex-col items-start leading-tight">
+          <span class="text-white text-sm">SHIELD <span class="hidden sm:inline text-neutral-400 text-xs">[6]</span></span>
+          <span class="shield-info text-xs"><span class="text-[#34d399]">-5 Radiation/s</span> · <span class="text-[#ff4d4d]" id="shield-drain-info">Costs 20 Energy/s</span></span>
+        </span>
+        <span class="shield-switch"><span class="shield-knob"></span></span>
+        <span class="text-sm w-9 text-left" id="badge-shield">OFF</span>
+      </button>
     </nav>
     <div hidden id="window-backdrop" onclick="showScreen('acoes')"></div>
     <!-- JANELA DE UM PRÉDIO (aberta ao clicar nele no mapa) -->
@@ -583,7 +621,7 @@
 
     <!-- SEÇÃO INFERIOR: NÚCLEO CLICKER (5 AÇÕES INSTANTÂNEAS TÁTEIS COM TRADE-OFF) -->
     <section id="clicker-bar">
-      <div class="grid grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3.5">
+      <div class="grid grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3.5">
         <!-- AÇÃO 1: MINERAR GELO -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-cyan/40 hover:border-cyan rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-ice" onclick="actionMineIce(event)" type="button">
           <div class="flex items-start justify-between w-full">
@@ -679,20 +717,6 @@
           </div>
         </button>
 
-        <!-- AÇÃO 6: ESCUDO DE RADIAÇÃO (LIGA/DESLIGA) -->
-        <button class="shield-btn" id="btn-click-shield" onclick="toggleShield()" type="button">
-          <span class="flex items-center gap-2">
-            <span class="material-symbols-outlined shield-btn-icon">shield</span>
-            <span class="text-white text-sm">SHIELD <span class="hidden sm:inline text-neutral-400 text-xs">[6]</span></span>
-          </span>
-          <span class="flex items-center gap-2">
-            <span class="shield-switch"><span class="shield-knob"></span></span>
-            <span class="text-sm w-9 text-left" id="badge-shield">OFF</span>
-          </span>
-          <span class="text-xs leading-tight text-center">
-            <span class="text-[#34d399]">-5 Radiation/s</span><br><span class="text-[#ff4d4d]" id="shield-drain-info">Costs 20 Energy/s</span>
-          </span>
-        </button>
       </div>
     </section>
 
@@ -1299,7 +1323,7 @@
         </div>
       </div>
       <div class="flex justify-end pt-2 border-t border-surface-border">
-        <button class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition" onclick="closeDataSourceModal()" type="button">
+        <button class="px-4 py-2 rounded-xl bg-[#34d399] hover:bg-[#6ee7b7] text-black font-bold transition" onclick="closeDataSourceModal()" type="button">
           Return to Base
         </button>
       </div>
@@ -1313,7 +1337,7 @@
       // 1. ÁUDIO PROCEDURAL & TRILHA CHIPTUNE ESPACIAL (WEB AUDIO API)
       // -------------------------------------------------------------
       let audioCtx = null;
-      let soundEnabled = true;
+      let musicOn = true, sfxOn = true; // configurações de som (salvas no navegador)
       let musicTimer = null;
       let musicPaused = false;      // música pausa durante alertas perigosos
       let eventAlertOpen = false;   // jogo pausa enquanto o alerta de tela cheia está aberto
@@ -1410,7 +1434,7 @@
       function startBackgroundMusic() {
         if (musicTimer) return;
         musicTimer = setInterval(() => {
-          if (!soundEnabled || musicPaused) return;
+          if (!musicOn || musicPaused || document.hidden) return;
           try {
             initAudio();
             if (!audioCtx || audioCtx.state !== 'running') return;
@@ -1425,7 +1449,7 @@
       }
 
       function playSound(type) {
-        if (!soundEnabled) return;
+        if (!sfxOn) return;
         try {
           initAudio();
           if (!audioCtx) return;
@@ -1474,7 +1498,7 @@
 
       // Sons do menu em estilo 8-bit: 'hover' (tic), 'select' (blip duplo), 'start' (arpejo subindo + vuuush de decolagem)
       function playMenuSfx(type) {
-        if (!soundEnabled) return;
+        if (!sfxOn) return;
         try {
           initAudio();
           if (!audioCtx) return;
@@ -1512,7 +1536,7 @@
 
       // Sirene que começa bem baixinha e cresce exponencialmente (sobe e desce 3 vezes, ~3 segundos)
       function playSiren() {
-        if (!soundEnabled) return;
+        if (!sfxOn) return;
         try {
           initAudio();
           if (!audioCtx) return;
@@ -1540,24 +1564,19 @@
         const menuLabel = document.getElementById('menu-music-label');
         const musicBars = document.getElementById('music-bars');
 
-        if (icon) icon.textContent = soundEnabled ? 'volume_up' : 'volume_off';
-        if (menuIcon) menuIcon.textContent = soundEnabled ? 'volume_up' : 'volume_off';
-        if (menuLabel) menuLabel.textContent = soundEnabled ? 'MUSIC: ENGAGED' : 'MUSIC: MUTED';
-        if (musicBars) musicBars.style.opacity = soundEnabled ? '1' : '0.25';
+        if (icon) icon.textContent = musicOn || sfxOn ? 'volume_up' : 'volume_off';
+        if (menuIcon) menuIcon.textContent = musicOn ? 'volume_up' : 'volume_off';
+        if (menuLabel) menuLabel.textContent = musicOn ? 'MUSIC: ENGAGED' : 'MUSIC: MUTED';
+        if (musicBars) musicBars.style.opacity = musicOn ? '1' : '0.25';
       }
 
-      window.toggleMenuMusic = function() {
-        soundEnabled = !soundEnabled;
-        syncSoundUI();
-        if (soundEnabled) {
-          initAudio();
-          startBackgroundMusic();
-          playSound('click');
-        }
-      };
-
+      // Botão do menu: liga/desliga só a música. Botão do jogo: liga/desliga todo o som (música + efeitos)
+      window.toggleMenuMusic = function() { setOption('music'); };
       document.getElementById('btn-sound-toggle').addEventListener('click', () => {
-        window.toggleMenuMusic();
+        musicOn = sfxOn = !(musicOn || sfxOn);
+        if (musicOn) { initAudio(); startBackgroundMusic(); playSound('click'); }
+        saveSettings();
+        syncSoundUI();
       });
 
       // O navegador só libera áudio após a primeira interação: a música começa no primeiro clique ou tecla
@@ -1579,18 +1598,17 @@
         { name: 'MARS (ARES)', sector: 'Ares Planitia Base', diffMult: 1.0 }
       ];
 
+      // Opções visíveis do menu (CONTINUE só aparece quando existe jogo salvo)
+      const menuOpts = () => [...document.querySelectorAll('.menu-opt')].filter(b => !b.classList.contains('hidden'));
+      window.menuHover = el => selectMenuIndex(menuOpts().indexOf(el));
       window.selectMenuIndex = function(idx) {
+        const opts = menuOpts();
+        idx = (idx + opts.length) % opts.length;
         if (idx !== menuSelectedIndex) playMenuSfx('hover');
         menuSelectedIndex = idx;
-        const opts = document.querySelectorAll('.menu-opt');
         opts.forEach((btn, i) => {
-          if (i === idx) {
-            btn.classList.add('pixel-option-active');
-            btn.classList.remove('text-slate-300', 'text-slate-400');
-          } else {
-            btn.classList.remove('pixel-option-active');
-            btn.classList.add(i === 1 ? 'text-slate-300' : 'text-slate-400');
-          }
+          btn.classList.toggle('pixel-option-active', i === idx);
+          btn.classList.toggle('text-slate-300', i !== idx);
         });
         // A seta única desliza até ficar à esquerda da opção selecionada
         const arrow = document.getElementById('menu-arrow');
@@ -1605,13 +1623,17 @@
       document.fonts.ready.then(() => selectMenuIndex(menuSelectedIndex));
       window.addEventListener('resize', () => selectMenuIndex(menuSelectedIndex));
 
+      // Durante o jogo, o tempo para enquanto as configurações estão abertas
       window.openMenuSettings = function() {
         playMenuSfx('select');
+        settingsOpen = true;
+        renderSettingsUI();
         document.getElementById('menu-settings-panel').classList.remove('hidden');
       };
 
       window.closeMenuSettings = function() {
         playMenuSfx('select');
+        settingsOpen = false;
         document.getElementById('menu-settings-panel').classList.add('hidden');
       };
 
@@ -1626,21 +1648,75 @@
         document.getElementById('menu-exit-panel').classList.add('hidden');
       };
 
-      window.setMenuDifficulty = function(diffKey) {
-        selectedDifficulty = diffKey;
-        playMenuSfx('select');
-        const btnEasy = document.getElementById('set-diff-easy');
-        const btnNormal = document.getElementById('set-diff-normal');
-        if (diffKey === 'easy') {
-          btnEasy.className = 'p-2.5 rounded border-2 border-emerald-400 bg-emerald-500/20 text-white font-bold transition cursor-pointer';
-          btnNormal.className = 'p-2.5 rounded border border-neutral-600 bg-neutral-900 text-neutral-300 font-bold transition cursor-pointer';
-        } else {
-          btnNormal.className = 'p-2.5 rounded border-2 border-amber bg-amber/20 text-white font-bold transition cursor-pointer';
-          btnEasy.className = 'p-2.5 rounded border border-neutral-600 bg-neutral-900 text-neutral-300 font-bold transition cursor-pointer';
+      // ---- Configurações (dificuldade, velocidade, som) e jogo salvo: tudo fica no navegador ----
+      const SETTINGS_KEY = 'orbitSettings', SAVE_KEY = 'orbitSave';
+      const SPEEDS = { slow: 1500, normal: 1000, fast: 600 }; // milissegundos por segundo de jogo
+      let gameSpeed = 'normal', settingsOpen = false;
+
+      function saveSettings() {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ difficulty: selectedDifficulty, speed: gameSpeed, music: musicOn, sfx: sfxOn })); } catch (e) {}
+      }
+      try {
+        const st = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+        if (st) {
+          if (st.difficulty) selectedDifficulty = st.difficulty;
+          if (SPEEDS[st.speed]) gameSpeed = st.speed;
+          musicOn = st.music !== false; sfxOn = st.sfx !== false;
         }
+      } catch (e) {}
+
+      function loadSave() {
+        try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; }
+      }
+      function saveGame() {
+        if (inMenu || S.isGameOver || !S.secondsAlive) return;
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
+      }
+      function deleteSaveData() {
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+      }
+      function refreshMenuContinue() {
+        document.getElementById('menu-continue').classList.toggle('hidden', !loadSave());
+        selectMenuIndex(0);
+      }
+      window.deleteSave = function() {
+        deleteSaveData();
+        playMenuSfx('select');
+        refreshMenuContinue();
+        renderSettingsUI();
       };
 
-      window.startFromMenu = function() {
+      // Marca a opção escolhida em cada grupo e mostra o resumo do jogo salvo
+      function renderSettingsUI() {
+        const cur = { difficulty: selectedDifficulty, speed: gameSpeed };
+        document.querySelectorAll('#menu-settings-panel [data-set]').forEach(b => {
+          const k = b.dataset.set;
+          if (k === 'music' || k === 'sfx') {
+            const on = k === 'music' ? musicOn : sfxOn;
+            b.classList.toggle('on', on);
+            b.textContent = `${k === 'music' ? 'Music' : 'Sound effects'}: ${on ? 'ON' : 'OFF'}`;
+          } else b.classList.toggle('on', cur[k] === b.dataset.val);
+        });
+        const saved = loadSave();
+        document.getElementById('save-info').textContent = saved
+          ? `Saved mission: ${Math.floor(saved.secondsAlive / 60)} min ${saved.secondsAlive % 60} s survived, ${saved.population} astronauts.`
+          : 'No saved game.';
+        document.getElementById('btn-delete-save').disabled = !saved;
+        document.getElementById('set-save-row').hidden = !inMenu; // durante o jogo o save é automático
+        syncSoundUI();
+      }
+
+      window.setOption = function(key, val) {
+        if (key === 'difficulty') { selectedDifficulty = val; S.difficulty = val; }
+        if (key === 'speed') gameSpeed = val;
+        if (key === 'music') { musicOn = !musicOn; if (musicOn) { initAudio(); startBackgroundMusic(); } }
+        if (key === 'sfx') sfxOn = !sfxOn;
+        playMenuSfx('select');
+        saveSettings();
+        renderSettingsUI();
+      };
+
+      window.startFromMenu = function(cont) {
         const menu = document.getElementById('retro-menu-screen');
         if (menu.classList.contains('zooming')) return;
         initAudio();
@@ -1648,7 +1724,7 @@
         playMenuSfx('start');
         document.getElementById('menu-settings-panel').classList.add('hidden');
         document.getElementById('menu-exit-panel').classList.add('hidden');
-        restartGame();
+        if (cont) continueGame(); else restartGame();
         showScreen('acoes');
         // Zoom em Marte (CSS) e o menu some revelando a colônia; o jogo só começa a contar depois
         menu.classList.add('zooming');
@@ -1660,6 +1736,7 @@
       };
 
       window.returnToMenu = function() {
+        saveGame();
         inMenu = true;
         playSound('click');
         document.getElementById('modal-gameover').classList.add('hidden');
@@ -1817,7 +1894,7 @@
       // Contador Geiger: cliques que começam raros a partir de 25 de radiação e aceleram conforme ela sobe
       let geigerBuf = null;
       function geigerClick() {
-        if (!soundEnabled || !audioCtx || audioCtx.state !== 'running') return;
+        if (!sfxOn || !audioCtx || audioCtx.state !== 'running') return;
         if (!geigerBuf) {
           geigerBuf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * .004), audioCtx.sampleRate);
           const d = geigerBuf.getChannelData(0);
@@ -2135,24 +2212,22 @@
           if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
             e.preventDefault();
             playSound('click');
-            selectMenuIndex((menuSelectedIndex + 1) % 3);
+            selectMenuIndex(menuSelectedIndex + 1);
           } else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
             e.preventDefault();
             playSound('click');
-            selectMenuIndex((menuSelectedIndex + 2) % 3);
+            selectMenuIndex(menuSelectedIndex - 1);
           } else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            if (menuSelectedIndex === 0) startFromMenu();
-            else if (menuSelectedIndex === 1) openMenuSettings();
-            else if (menuSelectedIndex === 2) openMenuExit();
+            menuOpts()[menuSelectedIndex].click();
           } else if (e.key.length === 1) {
-            // [PRESS ANY KEY] inicia diretamente como na imagem
-            startFromMenu();
+            // [PRESS ANY KEY]: continua o jogo salvo (ou começa um novo)
+            startFromMenu(!!loadSave());
           }
           return;
         }
 
-        if (S.isGameOver || eventAlertOpen || gamePaused) return;
+        if (S.isGameOver || eventAlertOpen || gamePaused || settingsOpen) return;
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
         const keyMap = {
@@ -2539,6 +2614,7 @@
       function triggerGameOver(reasonText, tipText) {
         if (S.isGameOver) return;
         S.isGameOver = true;
+        deleteSaveData();
         playSound('gameover');
 
         const min = String(Math.floor(S.secondsAlive / 60)).padStart(2, '0');
@@ -2554,11 +2630,9 @@
         document.getElementById('modal-gameover').classList.remove('hidden');
       }
 
-      window.restartGame = function() {
-        const nextDest = DESTINATIONS[0];
-
-        S = {
-          destination: nextDest,
+      function freshState() {
+        return {
+          destination: DESTINATIONS[0],
           difficulty: selectedDifficulty,
           secondsAlive: 0,
           isGameOver: false,
@@ -2603,7 +2677,22 @@
           nextEventCountdown: 20,
           nextArrivalCountdown: 20
         };
+      }
 
+      // Continua o jogo salvo (campos novos de versões mais recentes vêm do estado inicial)
+      function continueGame() {
+        const saved = loadSave(), base = freshState();
+        if (!saved) return restartGame();
+        S = { ...base, ...saved, upgrades: { ...base.upgrades, ...saved.upgrades }, difficulty: selectedDifficulty };
+        document.getElementById('modal-gameover').classList.add('hidden');
+        if (gamePaused) togglePause();
+        closeEventAlert();
+        if (S.activeEvent && S.activeEvent.actions.length) showEventAlert(S.activeEvent); // evento que estava aberto
+        renderHUD();
+      }
+
+      window.restartGame = function() {
+        S = freshState();
         document.getElementById('modal-gameover').classList.add('hidden');
         if (gamePaused) togglePause();
         endActiveEvent();
@@ -2623,8 +2712,8 @@
         playSound('click');
       };
 
-      setInterval(() => {
-        if (S.isGameOver || inMenu || eventAlertOpen || gamePaused) return;
+      function gameTick() {
+        if (S.isGameOver || inMenu || eventAlertOpen || gamePaused || settingsOpen) return;
 
         S.secondsAlive++;
         const diff = getDifficultyPhase();
@@ -2757,8 +2846,21 @@
           }
         }
 
+        if (S.secondsAlive % 5 === 0) saveGame(); // salva sozinho a cada 5 segundos de jogo
         renderHUD();
-      }, 1000);
+      }
+      // Velocidade do jogo: Slow = 1 segundo de jogo a cada 1,5 s; Fast = a cada 0,6 s
+      (function tickLoop() { gameTick(); setTimeout(tickLoop, SPEEDS[gameSpeed]); })();
+
+      // Saiu do jogo (outra aba, app minimizado, tela bloqueada): som para, jogo pausa e salva
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+          if (!inMenu && !S.isGameOver && !gamePaused) togglePause();
+          saveGame();
+        } else if (audioCtx) audioCtx.resume();
+      });
+      window.addEventListener('pagehide', saveGame);
 
       // -------------------------------------------------------------
       // 11. RENDERIZAÇÃO & INTERFACE REATIVA (<100MS)
@@ -3803,6 +3905,7 @@
           '...##..##..##...', '...#...##...#...', '..##...##...##..', '..#....##....#..', '.##..........##.',
           '.#.....##.....#.', '##............##', '################'
         ],
+        settings: ['....#.#....', '..#######..', '.##.....##.', '.#..###..#.', '##.#...#.##', '#..#...#..#', '##.#...#.##', '.#..###..#.', '.##.....##.', '..#######..', '....#.#....'],
         star: ['.....#.....', '.....#.....', '....###....', '###########', '.#########.', '..#######..', '..#######..', '.####.####.', '.###...###.', '##.......##']
       };
       // Nome antigo (Material Symbols) -> desenho pixel art
@@ -3851,6 +3954,9 @@
       })).observe(document.body, { subtree: true, childList: true, characterData: true });
 
       // Inicialização
+      document.body.appendChild(document.getElementById('menu-settings-panel')); // abre também durante o jogo
+      refreshMenuContinue();
+      renderSettingsUI();
       initSpaceBackground();
       initColonyRenderer();
       renderTopAlertBar();
