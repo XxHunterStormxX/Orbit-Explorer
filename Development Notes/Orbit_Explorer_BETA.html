@@ -221,8 +221,25 @@
     .menu-enter .menu-opt { animation: opt-in .45s steps(5) both; }
     .menu-enter .menu-opt:nth-child(2) { animation-delay: .9s; } .menu-enter .menu-opt:nth-child(3) { animation-delay: 1.05s; }
     .menu-enter .menu-opt:nth-child(4) { animation-delay: 1.2s; } .menu-enter .menu-opt:nth-child(5) { animation-delay: 1.35s; }
+    .menu-enter .menu-opt:nth-child(6) { animation-delay: 1.5s; }
+    /* Tutorial do menu */
+    .tut-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+    .tut-tabs button { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 2px solid #43363d; background: #1d1726; color: #cbd5e1; font-size: 13px; }
+    .tut-tabs button.on { border-color: #ffd23f; color: #ffd23f; }
+    .tut-page { min-height: 260px; }
+    .tut-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .tut-head .material-symbols-outlined { font-size: 44px; }
+    .tut-head h3 { font-family: 'Press Start 2P', monospace; font-size: clamp(12px, 2.4vw, 16px); line-height: 1.5; font-size-adjust: none; }
+    .tut-page p, .tut-page li { font-size: 15px; color: #e5e7eb; line-height: 1.45; margin-bottom: 6px; }
+    .tut-page ul { padding-left: 4px; }
+    .tut-page li { list-style: none; display: flex; gap: 8px; align-items: flex-start; }
+    .tut-page li .material-symbols-outlined { font-size: 18px; margin-top: 1px; }
+    .tut-page b { color: #ffd23f; }
+    .tut-page kbd { padding: 0 5px; border: 2px solid #6b6470; background: #2a2230; color: #fff; }
+    .tut-tip { margin-top: 8px; padding: 6px 10px; border-left: 4px solid #34d399; background: rgba(52, 211, 153, .1); }
+    .tut-nav { min-width: 110px; }
     @keyframes opt-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-    .menu-enter #menu-arrow, .menu-enter #btn-menu-music { animation: fade-in .4s 1.5s both; }
+    .menu-enter #menu-arrow, .menu-enter #btn-menu-music { animation: fade-in .4s 1.65s both; }
     @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
     .opt-btn { padding: 8px; border: 2px solid #525252; background: #171717; color: #d4d4d4; font-weight: 700; font-size: 13px; }
     .opt-btn.on { border-color: #34d399; background: rgba(52, 211, 153, .2); color: #fff; }
@@ -458,6 +475,7 @@
         <span class="absolute left-0 top-0 text-amber pointer-events-none" id="menu-arrow"><span class="menu-arrow-bob inline-block">►</span></span>
         <button class="menu-opt hidden transition cursor-pointer" id="menu-continue" onclick="startFromMenu(true)" onmouseenter="menuHover(this)" type="button">CONTINUE</button>
         <button class="menu-opt transition cursor-pointer" onclick="startFromMenu()" onmouseenter="menuHover(this)" type="button">NEW GAME</button>
+        <button class="menu-opt transition cursor-pointer" onclick="openTutorial()" onmouseenter="menuHover(this)" type="button">TUTORIAL</button>
         <button class="menu-opt transition cursor-pointer" onclick="openMenuSettings()" onmouseenter="menuHover(this)" type="button">SETTINGS</button>
         <button class="menu-opt transition cursor-pointer" onclick="openMenuExit()" onmouseenter="menuHover(this)" type="button">EXIT</button>
       </nav>
@@ -502,6 +520,23 @@
         <button class="w-full py-3 bg-[#34d399] hover:bg-[#6ee7b7] text-black font-pixel text-xs rounded transition cursor-pointer" onclick="closeMenuSettings()" type="button">
           SAVE & RETURN
         </button>
+      </div>
+    </div>
+
+    <!-- TUTORIAL: páginas que explicam cada parte do jogo (conteúdo no JS, TUTORIAL_PAGES) -->
+    <div class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-3" id="menu-tutorial-panel">
+      <div class="pixel-box max-w-2xl w-full p-4 sm:p-5 flex flex-col gap-3 max-h-[95vh]">
+        <div class="flex items-center justify-between border-b border-amber/40 pb-2">
+          <h2 class="font-pixel text-xs sm:text-sm text-amber">TUTORIAL</h2>
+          <button class="font-pixel text-xs text-rose-400 hover:text-white cursor-pointer" onclick="closeTutorial()" type="button">[X]</button>
+        </div>
+        <div class="tut-tabs" id="tut-tabs"></div>
+        <div class="tut-page flex-1 min-h-0 overflow-y-auto" id="tut-page"></div>
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-amber/30">
+          <button class="opt-btn tut-nav" onclick="tutorialGo(-1)" type="button">◄ BACK</button>
+          <span class="text-neutral-400 text-sm" id="tut-count"></span>
+          <button class="opt-btn tut-nav" id="tut-next" onclick="tutorialGo(1)" type="button">NEXT ►</button>
+        </div>
       </div>
     </div>
 
@@ -1789,6 +1824,101 @@
         document.getElementById('menu-settings-panel').classList.add('hidden');
       };
 
+      // ---- TUTORIAL do menu: uma página por parte do jogo (ícone, cor, nome curto da aba, título e texto) ----
+      const li = (icon, color, txt) => `<li><span class="material-symbols-outlined" style="color:${color}">${icon}</span><span>${txt}</span></li>`;
+      const TUTORIAL_PAGES = [
+        ['rocket_launch', '#ffd23f', 'Mission', 'YOUR MISSION', `
+          <p>You command a base on <b>Mars</b>. Keep your astronauts alive for as long as you can!</p>
+          <ul>${li('favorite', '#ff4d4d', 'The <b>Health</b> bar at the top is the life of the base. If it reaches <b>0%</b>, the mission ends.')}
+          ${li('schedule', '#7bd0ff', 'The game <b>never gets easy</b>: time passes, more astronauts arrive, storms get stronger and the crew uses more supplies.')}
+          ${li('favorite', '#34d399', 'Health comes back slowly when Water, Food and Oxygen are above 25 and Radiation is below 50.')}</ul>`],
+        ['water_drop', '#7bd0ff', 'Resources', 'RESOURCES', `
+          <p>The cards at the top show what the base has. The bar shows how full it is, and the number like <b>-0.8/s</b> shows how much goes in or out every second.</p>
+          <ul>${li('water_drop', '#7bd0ff', '<b>Water</b>, <b>Food</b> and <b>Oxygen</b>: the crew uses them all the time. If one reaches 0, Health drops fast!')}
+          ${li('bolt', '#69a7bf', '<b>Energy</b>: powers the machines, the clicks and the shield.')}
+          ${li('radiology', '#6bfa05', '<b>Radiation</b>: comes from space and keeps rising. Above <b>85</b> it hurts the crew.')}
+          ${li('psychology', '#c354ff', '<b>Science</b>: your money! Use it to upgrade, unlock and build.')}</ul>
+          <p class="tut-tip">A card turns yellow when something is running low. Act before it hits zero!</p>`],
+        ['touch_app', '#ffd23f', 'Clicks', 'CLICK BUTTONS', `
+          <p>The 5 big buttons at the bottom make resources. Each click <b>gives</b> one thing but <b>costs</b> another, so you must balance them:</p>
+          <ul>${li('ac_unit', '#7bd0ff', '<kbd>1</kbd> <b>Melt Ice</b>: +Water, costs Energy.')}
+          ${li('eco', '#e0a82e', '<kbd>2</kbd> <b>Harvest Plants</b>: +Food, costs Energy.')}
+          ${li('air', '#34d399', '<kbd>3</kbd> <b>Generate Oxygen</b>: +Oxygen, costs Water and Energy.')}
+          ${li('solar_power', '#ffd23f', '<kbd>4</kbd> <b>Solar Panel</b>: +Energy, costs Science.')}
+          ${li('biotech', '#c354ff', '<kbd>5</kbd> <b>Research</b>: +Science, costs Energy.')}</ul>
+          <p class="tut-tip">You can click with the mouse, tap on the phone or press the number keys.</p>`],
+        ['shield', '#7bd0ff', 'Shield', 'RADIATION SHIELD', `
+          <p>The <b>SHIELD</b> switch (bottom right, or key <kbd>6</kbd>) protects the base from radiation.</p>
+          <ul>${li('shield', '#7bd0ff', 'While it is <b>ON</b>, Radiation goes down fast, but it uses a lot of <b>Energy</b> every second.')}
+          ${li('radiology', '#6bfa05', 'The edges of the screen turn <b>green</b> as Radiation rises. Above 75 a <b>HIGH RADIATION</b> sign appears and the Geiger counter clicks.')}
+          ${li('bolt', '#ff4d4d', 'If Energy runs out, the shield turns itself off.')}</ul>
+          <p class="tut-tip">Turn it on when Radiation is high and off when it is low, to save Energy.</p>`],
+        ['domain', '#ffd23f', 'Click upgrades', 'BUILD: CLICK UPGRADES', `
+          <p>Open the <b>Build</b> tab. The first tab, <b>Click</b>, makes your buttons stronger. They are cheap: start here!</p>
+          <ul>${li('touch_app', '#ffd23f', 'Ice Pickaxe, Harvest Gloves, Turbo Electrolyzer, Panel Brush and Field Notebook: each one gives <b>more per click</b>.')}
+          ${li('smart_toy', '#ffd23f', '<b>Auto Clicker</b>: a little robot clicks for you, always on what the base needs most. But each level makes the crew use <b>15% more</b> supplies!')}</ul>`],
+        ['tree', '#34d399', 'Skill Tree', 'SKILL TREE', `
+          <p>Most buildings start <b>locked</b> <i class="lock-ico"></i>. Open the <b>Tree</b> tab to unlock them with Science.</p>
+          <ul>${li('touch_app', '#ffd23f', 'The tree starts at <b>CLICK</b> and has one branch for each resource.')}
+          ${li('check_circle', '#34d399', 'Each node shows what it needs: the node above it, a click upgrade level or a <b>Base level</b>.')}
+          ${li('star', '#ffd23f', 'A node that is ready <b>blinks</b>. Click it to unlock the building, then build it in the Build tab.')}</ul>`],
+        ['precision_manufacturing', '#7bd0ff', 'Buildings', 'BUILDINGS', `
+          <p>Buildings work <b>on their own</b>, every second, without clicks.</p>
+          <ul>${li('water_drop', '#7bd0ff', 'Ice Drill, Farm Tunnel, Oxygen Generator, Power Plant and Science Lab make resources.')}
+          ${li('home', '#c084fc', '<b>Habitat Module</b>: +5 places for astronauts. <b>Storage Depot</b>: +100 space in every bar.')}
+          ${li('domain', '#ffd23f', 'Click a building <b>on the map</b> to upgrade it. Each new building or level costs more than the last one.')}</ul>`],
+        ['group', '#c084fc', 'Crew', 'CREW', `
+          <p>Ships from Earth land on the pad and bring new astronauts.</p>
+          <ul>${li('psychology', '#c354ff', 'More astronauts make <b>more Science</b>, but also eat, drink and breathe more.')}
+          ${li('error', '#ff4d4d', 'If the base is full, the ship still lands! Astronauts with <b>no room</b> lose Health every second and Science drops. The crew counter blinks red.')}
+          ${li('home', '#34d399', 'Build <b>Habitat Modules</b> before the base gets full.')}</ul>`],
+        ['home', '#ffd23f', 'Base level', 'BASE: COMMAND CENTER', `
+          <p>The <b>Base</b> tab grows your base: Outpost, Settlement, Colony, City and Metropolis.</p>
+          <ul>${li('bolt', '#34d399', 'Each level makes all buildings produce <b>25% more</b> and gives more space in the bars.')}
+          ${li('domain', '#ffd23f', 'It is very expensive and needs a minimum number of buildings.')}
+          ${li('warning', '#ff4d4d', 'A bigger base also uses more supplies!')}</ul>`],
+        ['warning', '#ff4d4d', 'Events', 'EVENTS', `
+          <p>Sometimes a <b>WARNING</b> appears with a siren: solar storms, dust storms, sick crew and more. They are inspired by real NASA space weather data!</p>
+          <ul>${li('check_circle', '#ffd23f', 'The game waits while you <b>choose</b> what to do.')}
+          ${li('warning', '#ff4d4d', 'Every choice costs something. Think about what your base can spend right now.')}</ul>`],
+        ['chart-bar', '#7bd0ff', 'Data', 'DATA TAB', `
+          <p>The <b>Data</b> tab shows how your base is doing.</p>
+          <ul>${li('chart-bar', '#7bd0ff', 'A chart of your resources in the last 3 minutes. Red dashed lines mark events.')}
+          ${li('bolt', '#34d399', 'A table with what is <b>made</b> and <b>used</b> every second, and a list of the events and your choices.')}
+          ${li('group', '#c084fc', 'Your crew and how much each astronaut uses.')}</ul>`],
+        ['refresh', '#cbd5e1', 'Save & keys', 'SAVE, SETTINGS & KEYS', `
+          <ul>${li('check_circle', '#34d399', 'The game <b>saves by itself</b> every 5 seconds. The house button goes back to the menu and saves too. Use <b>CONTINUE</b> to play again.')}
+          ${li('pause', '#cbd5e1', 'The pause button stops the game. The game also pauses when you leave the page.')}
+          ${li('star', '#ffd23f', '<b>SETTINGS</b>: choose Explorer (easy), Astronaut (normal) or Commander (hard), and turn music and sounds on or off.')}
+          ${li('touch_app', '#ffd23f', 'Keys: <kbd>1</kbd>-<kbd>5</kbd> click buttons, <kbd>6</kbd> shield. In the menu: arrows and <kbd>Enter</kbd>.')}</ul>
+          <p class="tut-tip">Good luck, Commander! Press NEW GAME to start your mission.</p>`]
+      ];
+      let tutPage = 0;
+      document.getElementById('tut-tabs').innerHTML = TUTORIAL_PAGES.map(([icon, color, tab], i) =>
+        `<button onclick="tutorialGo(${i}, true)" type="button"><span class="material-symbols-outlined text-[16px]" style="color:${color}">${icon}</span>${tab}</button>`).join('');
+      window.tutorialGo = function(n, jump) {
+        tutPage = Math.max(0, Math.min(TUTORIAL_PAGES.length - 1, jump ? n : tutPage + n));
+        const [icon, color, , title, html] = TUTORIAL_PAGES[tutPage];
+        const page = document.getElementById('tut-page');
+        page.innerHTML = `<div class="tut-head"><span class="material-symbols-outlined" style="color:${color}">${icon}</span><h3 style="color:${color}">${title}</h3></div>${html}`;
+        page.scrollTop = 0;
+        document.querySelectorAll('#tut-tabs button').forEach((b, i) => b.classList.toggle('on', i === tutPage));
+        document.querySelector('#tut-tabs button.on').scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        document.getElementById('tut-count').textContent = `${tutPage + 1} / ${TUTORIAL_PAGES.length}`;
+        document.getElementById('tut-next').textContent = tutPage === TUTORIAL_PAGES.length - 1 ? 'DONE ✔' : 'NEXT ►';
+        document.getElementById('tut-next').onclick = tutPage === TUTORIAL_PAGES.length - 1 ? closeTutorial : () => tutorialGo(1);
+        playMenuSfx('hover');
+      };
+      window.openTutorial = function() {
+        playMenuSfx('select');
+        document.getElementById('menu-tutorial-panel').classList.remove('hidden');
+        tutorialGo(0, true);
+      };
+      window.closeTutorial = function() {
+        playMenuSfx('select');
+        document.getElementById('menu-tutorial-panel').classList.add('hidden');
+      };
+
       window.openMenuExit = function() {
         playMenuSfx('select');
         window.close(); // só funciona se a aba foi aberta por script; senão mostra o aviso abaixo
@@ -2397,6 +2527,12 @@
       document.addEventListener('keydown', (e) => {
         if (introActive) { introClick(); return; } // tecla começa a abertura (ou pula, se já começou)
         if (inMenu) {
+          if (!document.getElementById('menu-tutorial-panel').classList.contains('hidden')) { // tutorial: setas trocam a página
+            if (e.key === 'ArrowRight' || e.key === 'Enter') tutPage === TUTORIAL_PAGES.length - 1 ? closeTutorial() : tutorialGo(1);
+            else if (e.key === 'ArrowLeft') tutorialGo(-1);
+            else if (e.key === 'Escape') closeTutorial();
+            return;
+          }
           const settingsOpen = !document.getElementById('menu-settings-panel').classList.contains('hidden');
           const exitOpen = !document.getElementById('menu-exit-panel').classList.contains('hidden');
           if (settingsOpen || exitOpen) {
