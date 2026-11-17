@@ -1925,6 +1925,7 @@
         ['group', '#c084fc', 'Crew', 'CREW', `
           <p>Ships from Earth land on the pad and bring new astronauts.</p>
           <ul>${li('psychology', '#c354ff', 'More astronauts make <b>more Science</b>, but also eat, drink and breathe more.')}
+          ${li('rocket_launch', '#7bd0ff', 'Keep Water, Food, Oxygen and Energy <b>high</b>: ships come <b>faster</b>. Low bars: ships come slower and with fewer astronauts. If the bars drop below 25%, Earth waits.')}
           ${li('error', '#ff4d4d', 'If the base is full, the ship still lands! Astronauts with <b>no room</b> lose Health every second and Science drops. The crew counter blinks red.')}
           ${li('home', '#34d399', 'Build <b>Habitat Modules</b> before the base gets full.')}</ul>`],
         ['home', '#ffd23f', 'Base level', 'BASE: COMMAND CENTER', `
@@ -1986,6 +1987,7 @@
             ${li('domain', '#ffd23f', 'Clique num prédio <b>no mapa</b> para melhorá-lo. Cada prédio ou nível novo custa mais que o anterior.')}</ul>`],
           ['Tripulação', 'TRIPULAÇÃO', `<p>Naves da Terra pousam na plataforma e trazem novos astronautas.</p>
             <ul>${li('psychology', '#c354ff', 'Mais astronautas fazem <b>mais Ciência</b>, mas também comem, bebem e respiram mais.')}
+            ${li('rocket_launch', '#7bd0ff', 'Mantenha Água, Comida, Oxigênio e Energia <b>altas</b>: as naves chegam <b>mais rápido</b>. Barras baixas: as naves demoram mais e trazem menos astronautas. Se as barras caírem abaixo de 25%, a Terra espera.')}
             ${li('error', '#ff4d4d', 'Se a base estiver cheia, a nave pousa mesmo assim! Astronautas <b>sem lugar</b> perdem Vida a cada segundo e a Ciência cai. O contador da tripulação pisca vermelho.')}
             ${li('home', '#34d399', 'Construa <b>Módulos Habitacionais</b> antes de a base lotar.')}</ul>`],
           ['Nível da base', 'BASE: CENTRO DE COMANDO', `<p>A aba <b>Base</b> faz sua base crescer: Posto Avançado, Assentamento, Colônia, Cidade e Metrópole.</p>
@@ -2041,6 +2043,7 @@
             ${li('domain', '#ffd23f', 'Haz clic en un edificio <b>en el mapa</b> para mejorarlo. Cada edificio o nivel nuevo cuesta más que el anterior.')}</ul>`],
           ['Tripulación', 'TRIPULACIÓN', `<p>Naves de la Tierra aterrizan en la plataforma y traen nuevos astronautas.</p>
             <ul>${li('psychology', '#c354ff', 'Más astronautas hacen <b>más Ciencia</b>, pero también comen, beben y respiran más.')}
+            ${li('rocket_launch', '#7bd0ff', 'Mantén Agua, Comida, Oxígeno y Energía <b>altas</b>: las naves llegan <b>más rápido</b>. Barras bajas: las naves tardan más y traen menos astronautas. Si las barras bajan del 25%, la Tierra espera.')}
             ${li('error', '#ff4d4d', '¡Si la base está llena, la nave aterriza igual! Los astronautas <b>sin lugar</b> pierden Vida cada segundo y la Ciencia baja. El contador de tripulación parpadea en rojo.')}
             ${li('home', '#34d399', 'Construye <b>Módulos Habitacionales</b> antes de que la base se llene.')}</ul>`],
           ['Nivel de base', 'BASE: CENTRO DE MANDO', `<p>La pestaña <b>Base</b> hace crecer tu base: Puesto Avanzado, Asentamiento, Colonia, Ciudad y Metrópolis.</p>
@@ -2325,6 +2328,7 @@
         ['@ has ended! The base is back to normal.', '@ acabou! A base voltou ao normal.', '¡@ terminó! La base volvió a la normalidad.'],
         ['# astronaut has no bed! They lose Health and Science drops. Build a @!', '# astronauta está sem cama! Ele perde Vida e a Ciência cai. Construa um @!', '¡# astronauta no tiene cama! Pierde Vida y la Ciencia baja. ¡Construye un @!'],
         ['# astronauts have no bed! They lose Health and Science drops. Build a @!', '# astronautas estão sem cama! Eles perdem Vida e a Ciência cai. Construa um @!', '¡# astronautas no tienen cama! Pierden Vida y la Ciencia baja. ¡Construye un @!'],
+        ['Earth will not send crew while the base is low on resources! Keep Water, Food, Oxygen and Energy above #%.', 'A Terra não manda tripulação enquanto a base está com poucos recursos! Mantenha Água, Comida, Oxigênio e Energia acima de #%.', '¡La Tierra no envía tripulación mientras la base tiene pocos recursos! Mantén Agua, Comida, Oxígeno y Energía por encima del #%.'],
         ['A spacecraft brought # new astronaut! More people eat more: harvest more Food!', 'Uma nave trouxe # novo astronauta! Mais gente come mais: colha mais Comida!', '¡Una nave trajo # nuevo astronauta! Más gente come más: ¡cosecha más Comida!'],
         ['A spacecraft brought # new astronauts! More people eat more: harvest more Food!', 'Uma nave trouxe # novos astronautas! Mais gente come mais: colha mais Comida!', '¡Una nave trajo # nuevos astronautas! Más gente come más: ¡cosecha más Comida!'],
         // Eventos
@@ -2577,7 +2581,7 @@
         const ev = S.activeEvent;
         if (ev && ev.sheltered) return 0;
         // Base lotada: quem está sem lugar não pesquisa e o resto rende só metade
-        return Math.min(S.population, S.capPop) * (ev && ev.id === 'sick_crew' ? 0.5 : 1) * (overcrowd() ? 0.5 : 1);
+        return Math.min(S.population, S.capPop) * prodMult() * (ev && ev.id === 'sick_crew' ? 0.5 : 1) * (overcrowd() ? 0.5 : 1);
       }
       // Astronautas acima do limite de vagas (cada um tira Health por segundo)
       const OVERCROWD_MAX = 4;
@@ -2593,6 +2597,15 @@
 
       function autoEnergyRate() {
         return bldPower('autoEnergy') * 3.0 * prodMult();
+      }
+
+      // Science por segundo: tripulação + Antena + Laboratórios (tudo cresce com o nível da base)
+      function sciRate() {
+        return crewSciRate() + S.upgrades.antenna * 3 * prodMult() + bldPower('autoSci') * 3 * prodMult();
+      }
+      // Quanto as barras de Água, Comida, Oxigênio e Energia estão cheias (0 a 1, média)
+      function resourceFill() {
+        return (S.water / S.capWater + S.food / S.capFood + S.o2 / S.capO2 + S.energy / S.capEnergy) / 4;
       }
 
       // ---- Centro de Comando (nível da base) ----
@@ -3104,20 +3117,22 @@
         habitat:    { baseCost: 80, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Build',   title: 'Habitat Module' },
         autoIce:    { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Ice Drill' },
         autoO2:     { baseCost: 70, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Oxygen Generator' },
-        autoSci:    { baseCost: 90, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Build',   title: 'Science Lab' },
+        autoSci:    { baseCost: 90, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Science Lab' },
         autoEnergy: { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Power Plant' },
         autoFood:   { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Farm Tunnel' },
         // Aba Click: melhoram só o clique (raiz da árvore de habilidades)
-        clickIce:   { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Ice Pickaxe' },
-        clickFood:  { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Harvest Gloves' },
-        clickO2:    { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
-        clickSolar: { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
-        clickSci:   { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Field Notebook' },
+        clickIce:   { baseCost: 10, maxLvl: Infinity, costMult: 1.2, defaultBtnLabel: 'Upgrade', title: 'Ice Pickaxe' },
+        clickFood:  { baseCost: 10, maxLvl: Infinity, costMult: 1.2, defaultBtnLabel: 'Upgrade', title: 'Harvest Gloves' },
+        clickO2:    { baseCost: 10, maxLvl: Infinity, costMult: 1.2, defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
+        clickSolar: { baseCost: 10, maxLvl: Infinity, costMult: 1.2, defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
+        clickSci:   { baseCost: 10, maxLvl: Infinity, costMult: 1.2, defaultBtnLabel: 'Upgrade', title: 'Field Notebook' },
         autoClick:  { baseCost: 150, maxLvl: Infinity, costMult: 2, defaultBtnLabel: 'Upgrade', title: 'Auto Clicker' }
       };
       // Ganho de cada clique: [melhoria, base, +por nível, recurso]
-      const CLICK_UP = { ice: ['clickIce', 6, 2, 'Water'], food: ['clickFood', 6, 4, 'Food'], o2: ['clickO2', 8, 3, 'Oxygen'], solar: ['clickSolar', 10, 5, 'Energy'], sci: ['clickSci', 5, 3, 'Science'] };
-      function clickGain(r) { const [k, base, step] = CLICK_UP[r]; return base + S.upgrades[k] * step; }
+      // Clique: valor inicial + bônus por nível; tudo cresce +25% por nível da base (igual aos prédios)
+      const CLICK_UP = { ice: ['clickIce', 8, 5, 'Water'], food: ['clickFood', 8, 6, 'Food'], o2: ['clickO2', 10, 6, 'Oxygen'], solar: ['clickSolar', 12, 7, 'Energy'], sci: ['clickSci', 6, 4, 'Science'] };
+      const clickVal = (base, step, l) => Math.round((base + l * step) * prodMult());
+      function clickGain(r) { const [k, base, step] = CLICK_UP[r]; return clickVal(base, step, S.upgrades[k]); }
       // Árvore de habilidades (aba Tree): raiz no clique, um galho por recurso. Cada nó custa Science e pede
       // o nó de cima + nível de clique e/ou nível da base. Destravar o nó libera o prédio no Build.
       const TREE_COLS = [
@@ -3156,12 +3171,12 @@
         greenhouse: l => `+${l} Food/s`,
         solar:      l => `+${(3.2 + l * 2).toFixed(1)} Energy/s`,
         shield:     l => `Shield uses ${(SHIELD_COST * Math.pow(0.9, l)).toFixed(1)} Energy/s`,
-        antenna:    l => `+${(l * 1.5).toFixed(1)} Science/s`,
+        antenna:    l => `+${r1(l * 3 * prodMult())} Science/s`,
         o2tech:     l => `Each astronaut breathes ${(0.6 * Math.pow(0.92, l)).toFixed(2)} Oxygen/s`,
         // Construções: total de todas as cópias (conta também os upgrades individuais feitos no mapa)
         autoIce:    l => `+${r1((l + bldPower('autoIce') - S.upgrades.autoIce) * 2 * prodMult())} Water/s`,
         autoO2:     l => `+${r1((l + bldPower('autoO2') - S.upgrades.autoO2) * 2.5 * prodMult())} Oxygen/s`,
-        autoSci:    l => `+${r1((l + bldPower('autoSci') - S.upgrades.autoSci) * 2 * prodMult())} Science/s`,
+        autoSci:    l => `+${r1((l + bldPower('autoSci') - S.upgrades.autoSci) * 3 * prodMult())} Science/s`,
         autoEnergy: l => `+${r1((l + bldPower('autoEnergy') - S.upgrades.autoEnergy) * 3 * prodMult())} Energy/s`,
         autoFood:   l => `+${r1((l + bldPower('autoFood') - S.upgrades.autoFood) * 2 * prodMult())} Food/s`,
         habitat:    l => `+${(l + bldPower('habitat') - S.upgrades.habitat) * 5} crew space`,
@@ -3212,7 +3227,7 @@
         clickSci: ['psychology', '#c354ff', 'Write down every discovery: more Science in each experiment!'],
         autoClick: ['smart_toy', '#ffd23f', 'A little robot helper clicks for you, always on what the base needs most!']
       };
-      Object.values(CLICK_UP).forEach(([k, base, step, name]) => { UPGRADE_STATS[k] = l => `+${base + l * step} ${name} per click`; });
+      Object.values(CLICK_UP).forEach(([k, base, step, name]) => { UPGRADE_STATS[k] = l => `+${clickVal(base, step, l)} ${name} per click`; });
       UPGRADE_STATS.autoClick = l => l ? `${(l * 0.5).toFixed(1)} auto clicks/s, crew uses +${l * 15}% supplies` : 'Off';
       document.querySelector('[data-screen="upgrades"] .grid').insertAdjacentHTML('afterbegin', Object.entries(CLICK_CARD).map(([k, [icon, color, txt]]) => `
         <div class="res-card res-click bg-surface-low border border-surface-border p-3 rounded-xl flex flex-col justify-between">
@@ -3654,7 +3669,7 @@
         }
 
         // Science passiva gerada pelos astronautas + Antena + Science Drone Autônomo
-        const sciGain = crewSciRate() +(S.upgrades.antenna * 1.5) + (bldPower('autoSci') * 2.0 * prodMult());
+        const sciGain = sciRate();
         S.science += sciGain;
         S.totalSciEarned += sciGain;
 
@@ -3742,20 +3757,28 @@
         S.hist.push({ t: S.secondsAlive, water: S.water, food: S.food, o2: S.o2, energy: S.energy });
         if (S.hist.length > 600) S.hist.shift();
 
-        // 5. Naves da Terra trazem astronautas (mais frequente e mais gente a cada fase)
+        // 5. Naves da Terra trazem astronautas (mais frequente e mais gente a cada fase).
+        // A Terra só manda gente para uma base bem cuidada: barras acima de 70% = naves 15% mais rápidas;
+        // abaixo de 45% = naves 40% mais lentas e só 1 astronauta; abaixo de 25% = a nave espera
         S.nextArrivalCountdown--;
         if (S.nextArrivalCountdown <= 0) {
-          S.nextArrivalCountdown = Math.max(6, diff.arrivalEvery - S.upgrades.autoPop * 3);
-          window.launchRocket(); // foguete pousa na estação trazendo a tripulação
-          const wanted = diff.phase === 1 ? 1 : diff.phase === 2 ? 1 + Math.floor(Math.random() * 2) : 2;
-          // A nave pousa mesmo com a base cheia (até OVERCROWD_MAX pessoas sem lugar)
-          const arriving = Math.min(wanted, S.capPop + OVERCROWD_MAX - S.population);
-          if (arriving > 0) {
-            S.population += arriving;
-            if (S.population > S.peakPopulation) S.peakPopulation = S.population;
-            overcrowd() ? playSound('alert') : sfx('arrive');
-            if (overcrowd()) setTopAlert('error', 'BASE OVERCROWDED', `${overcrowd()} astronaut${overcrowd() > 1 ? 's have' : ' has'} no bed! They lose Health and Science drops. Build a Habitat Module!`);
-            else if (!S.activeEvent) setTopAlert('warning', 'NEW CREW', `A spacecraft brought ${arriving} new astronaut${arriving > 1 ? 's' : ''}! More people eat more: harvest more Food!`);
+          const fill = resourceFill(), every = Math.max(6, diff.arrivalEvery - S.upgrades.autoPop * 3);
+          if (fill < 0.25) {
+            S.nextArrivalCountdown = 10;
+            if (!S.activeEvent) setTopAlert('warning', 'SHIP DELAYED', 'Earth will not send crew while the base is low on resources! Keep Water, Food, Oxygen and Energy above 25%.');
+          } else {
+            S.nextArrivalCountdown = Math.round(every * (fill > 0.7 ? 0.85 : fill < 0.45 ? 1.4 : 1));
+            window.launchRocket(); // foguete pousa na estação trazendo a tripulação
+            const wanted = fill < 0.45 ? 1 : (diff.phase === 1 ? 1 : diff.phase === 2 ? 1 + Math.floor(Math.random() * 2) : 2);
+            // A nave pousa mesmo com a base cheia (até OVERCROWD_MAX pessoas sem lugar)
+            const arriving = Math.min(wanted, S.capPop + OVERCROWD_MAX - S.population);
+            if (arriving > 0) {
+              S.population += arriving;
+              if (S.population > S.peakPopulation) S.peakPopulation = S.population;
+              overcrowd() ? playSound('alert') : sfx('arrive');
+              if (overcrowd()) setTopAlert('error', 'BASE OVERCROWDED', `${overcrowd()} astronaut${overcrowd() > 1 ? 's have' : ' has'} no bed! They lose Health and Science drops. Build a Habitat Module!`);
+              else if (!S.activeEvent) setTopAlert('warning', 'NEW CREW', `A spacecraft brought ${arriving} new astronaut${arriving > 1 ? 's' : ''}! More people eat more: harvest more Food!`);
+            }
           }
         }
 
@@ -3927,7 +3950,7 @@
 
         const baseRadRate = RAD_BASE * S.destination.diffMult * diff.radMult * drainMult;
         const radRate = S.shieldActive ? -SHIELD_CLEAN : radRise();
-        const sciNet = crewSciRate() +(S.upgrades.antenna * 1.5) + (bldPower('autoSci') * 2.0 * prodMult());
+        const sciNet = sciRate();
 
         const elRateWater = document.getElementById('rate-water');
         const elRateFood = document.getElementById('rate-food');
@@ -4871,7 +4894,7 @@
         // Prédios repetíveis: cada cópia tem o seu nível; cada nível rende e custa o mesmo que mais um prédio
         const UPG_KEY = { waterExtractor: 'autoIce', tanks: 'autoO2', lab: 'autoSci', generator: 'autoEnergy', greenhouseTunnel: 'autoFood', habitat: 'habitat' };
         const UPG_INFO = {
-          autoIce: { rate: 2, res: 'Water/s' }, autoO2: { rate: 2.5, res: 'Oxygen/s' }, autoSci: { rate: 2, res: 'Science/s' },
+          autoIce: { rate: 2, res: 'Water/s' }, autoO2: { rate: 2.5, res: 'Oxygen/s' }, autoSci: { rate: 3, res: 'Science/s' },
           autoEnergy: { rate: 3, res: 'Energy/s' }, autoFood: { rate: 2, res: 'Food/s' }, habitat: { rate: 5, res: 'crew space' }
         };
         // Prédios únicos (melhorias e estação de foguete): o nível é o do card no Build
