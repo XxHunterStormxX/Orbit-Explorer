@@ -400,6 +400,15 @@
     .pop-over { color:#ff4d4d !important; animation: pop-blink .8s steps(2) infinite; }
     #hud-pop-box.pop-full { border-color: #ff4d4d !important; background: rgba(255, 77, 77, .18) !important; box-shadow: 0 0 0 2px rgba(255, 77, 77, .45); animation: pop-blink .8s steps(2) infinite; }
     @keyframes pop-blink { 50% { opacity:.35; } }
+    .color-builds { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.14); display: flex; flex-direction: column; gap: 4px; }
+    .cb-title { font-size: 10px; color: #a3a3a3; font-family: ui-monospace, monospace; text-transform: uppercase; }
+    .cb-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .cb-btn { position: relative; border: 2px solid var(--tier); background: color-mix(in srgb, var(--tier) 16%, #15111c); color: var(--tier); font-size: 10px; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; line-height: 1.2; font-family: ui-monospace, monospace; cursor: pointer; }
+    .cb-btn small { color: #e5e5e5; font-size: 10px; }
+    .cb-btn i { position: absolute; top: -7px; right: -5px; background: var(--tier); color: #000; font-size: 9px; font-style: normal; font-weight: 700; padding: 0 3px; }
+    .cb-btn i:empty { display: none; }
+    .cb-btn:disabled { opacity: .45; cursor: not-allowed; }
+    .cb-btn.locked { border-color: #4b4458; color: #8a8199; background: #1d1726; }
     .tree-tier { margin-top: 28px; padding: 6px 14px; border: 3px solid var(--tier); background: color-mix(in srgb, var(--tier) 18%, #1d1726); color: var(--tier); font-size: 14px; display: flex; align-items: center; gap: 6px; }
     .tree-tier.locked { border-color: #4b4458; color: #8a8199; background: #1d1726; }
     .tier-cols { margin-top: 0; }
@@ -1975,7 +1984,7 @@
           <ul>${li('touch_app', '#ffd23f', 'The tree starts at <b>CLICK</b> and has one branch for each resource.')}
           ${li('check_circle', '#34d399', 'Each node shows what it needs: the node above it, a click upgrade level or a <b>Base level</b>.')}
           ${li('star', '#ffd23f', 'A node that is ready <b>blinks</b>. Click it to unlock the building, then build it in the Build tab.')}
-          ${li('domain', '#c084fc', '<b>Colors:</b> each Base level opens a new row: gray, blue, green, purple and gold. Each of the 13 structures has its own color node: it paints that building, and makes it <b>25% stronger</b> (Storage and Habitat get more space).')}</ul>`],
+          ${li('domain', '#c084fc', '<b>Colors:</b> each Base level opens a new row: gray, blue, green, purple and gold. Each color node unlocks a <b>colored version</b> of that structure in the Build tab, with its own price and counter. Each one counts as <b>2, 3, 5 or 8</b> normal buildings.')}</ul>`],
         ['precision_manufacturing', '#7bd0ff', 'Buildings', 'BUILDINGS', `
           <p>Buildings work <b>on their own</b>, every second, without clicks.</p>
           <ul>${li('water_drop', '#7bd0ff', 'Ice Drill, Farm Tunnel, Oxygen Generator, Power Plant and Science Lab make resources.')}
@@ -2040,7 +2049,7 @@
             <ul>${li('touch_app', '#ffd23f', 'A árvore começa no <b>CLIQUE</b> e tem um galho para cada recurso.')}
             ${li('check_circle', '#34d399', 'Cada nó mostra o que precisa: o nó de cima, um nível de melhoria de clique ou um <b>nível da Base</b>.')}
             ${li('star', '#ffd23f', 'O nó que está pronto <b>pisca</b>. Clique nele para desbloquear o prédio e depois construa na aba Construir.')}
-            ${li('domain', '#c084fc', '<b>Cores:</b> cada nível da Base abre uma fileira nova: cinza, azul, verde, roxo e dourado. Cada uma das 13 estruturas tem o seu nó de cor: ele pinta aquele prédio, e deixa ele <b>25% mais forte</b> (Storage e Habitat ganham mais espaço).')}</ul>`],
+            ${li('domain', '#c084fc', '<b>Cores:</b> cada nível da Base abre uma fileira nova: cinza, azul, verde, roxo e dourado. Cada nó de cor libera uma <b>versão colorida</b> daquela estrutura na aba Build, com preço e contador próprios. Cada uma vale <b>2, 3, 5 ou 8</b> prédios normais.')}</ul>`],
           ['Prédios', 'PRÉDIOS', `<p>Os prédios trabalham <b>sozinhos</b>, a cada segundo, sem cliques.</p>
             <ul>${li('water_drop', '#7bd0ff', 'Perfuratriz de Gelo, Túnel de Plantio, Gerador de Oxigênio, Usina de Energia e Laboratório fazem recursos.')}
             ${li('home', '#c084fc', '<b>Módulo Habitacional</b>: +5 vagas para astronautas. <b>Depósito</b>: +100 de espaço em cada barra.')}
@@ -2097,7 +2106,7 @@
             <ul>${li('touch_app', '#ffd23f', 'El árbol empieza en <b>CLIC</b> y tiene una rama para cada recurso.')}
             ${li('check_circle', '#34d399', 'Cada nodo muestra lo que necesita: el nodo de arriba, un nivel de mejora de clic o un <b>nivel de Base</b>.')}
             ${li('star', '#ffd23f', 'El nodo que está listo <b>parpadea</b>. Haz clic en él para desbloquear el edificio y luego constrúyelo en la pestaña Construir.')}
-            ${li('domain', '#c084fc', '<b>Colores:</b> cada nivel de la Base abre una fila nueva: gris, azul, verde, morado y dorado. Cada una de las 13 estructuras tiene su nodo de color: pinta ese edificio, y lo hace <b>25% más fuerte</b> (Storage y Habitat ganan más espacio).')}</ul>`],
+            ${li('domain', '#c084fc', '<b>Colores:</b> cada nivel de la Base abre una fila nueva: gris, azul, verde, morado y dorado. Cada nodo de color desbloquea una <b>versión de color</b> de esa estructura en la pestaña Build, con precio y contador propios. Cada una vale <b>2, 3, 5 u 8</b> edificios normales.')}</ul>`],
           ['Edificios', 'EDIFICIOS', `<p>Los edificios trabajan <b>solos</b>, cada segundo, sin clics.</p>
             <ul>${li('water_drop', '#7bd0ff', 'Taladro de Hielo, Túnel de Cultivo, Generador de Oxígeno, Planta de Energía y Laboratorio hacen recursos.')}
             ${li('home', '#c084fc', '<b>Módulo Habitacional</b>: +5 plazas para astronautas. <b>Depósito</b>: +100 de espacio en cada barra.')}
@@ -2203,6 +2212,8 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['Colored versions', 'Versões coloridas', 'Versiones de color'], ['Each one counts as 2, 3, 5 or 8 normal ones.', 'Cada uma vale 2, 3, 5 ou 8 normais.', 'Cada una vale 2, 3, 5 u 8 normales.'],
+        ['Unlock this color in the Tree tab first!', 'Desbloqueie essa cor na aba Árvore primeiro!', '¡Desbloquea este color en la pestaña Árbol primero!'],
         ['@ got a new color and is stronger now!', '@ ganhou uma cor nova e ficou mais forte!', '¡@ tiene un color nuevo y ahora es más fuerte!'], ['+250 space', '+250 espaço', '+250 espacio'], ['+5 crew', '+5 vagas', '+5 plazas'],
         ['GRAY', 'CINZA', 'GRIS'], ['BLUE', 'AZUL', 'AZUL'], ['GREEN', 'VERDE', 'VERDE'], ['PURPLE', 'ROXO', 'MORADO'], ['GOLD', 'DOURADO', 'DORADO'],
         ['LEVEL #', 'NÍVEL #', 'NIVEL #'], ['Base Lv #', 'Base Nv #', 'Base Nv #'], ['✔ Color Lv #', '✔ Cor Nv #', '✔ Color Nv #'], ['✘ Color Lv #', '✘ Cor Nv #', '✘ Color Nv #'],
@@ -2752,11 +2763,11 @@
 
       // Oxigênio respirado por astronauta (Air Filters reduz, mínimo 0.1)
       function o2PerAstroBase() {
-        return 0.6 * Math.pow(0.92, S.upgrades.o2tech) / cm('o2tech'); // cada nível: -8%
+        return 0.6 * Math.pow(0.92, lvlE('o2tech')); // cada nível: -8%
       }
       // Água bebida por astronauta (Water Recycler reduz 8% por nível)
       function waterPerAstroBase() {
-        return 0.5 * Math.pow(0.92, S.upgrades.recycler) / cm('recycler');
+        return 0.5 * Math.pow(0.92, lvlE('recycler'));
       }
       // Marte fica mais difícil o tempo todo: a tripulação gasta mais a cada segundo (x2 aos 7,5 min, x3 aos 15 min),
       // então a base nunca estabiliza: sempre é preciso construir mais
@@ -2790,12 +2801,12 @@
       }
 
       function autoEnergyRate() {
-        return bldPower('autoEnergy') * 3.0 * bldMult('autoEnergy');
+        return bldProd('autoEnergy') * 3.0 * prodMult();
       }
 
       // Science por segundo: tripulação + Antena + Laboratórios (tudo cresce com o nível da base)
       function sciRate() {
-        return crewSciRate() + S.upgrades.antenna * 3 * bldMult('antenna') + bldPower('autoSci') * 3 * bldMult('autoSci');
+        return crewSciRate() + lvlE('antenna') * 3 * prodMult() + bldProd('autoSci') * 3 * prodMult();
       }
       // Quanto as barras de Água, Comida, Oxigênio e Energia estão cheias (0 a 1, média)
       function resourceFill() {
@@ -2882,18 +2893,18 @@
       }, 50);
 
       function getShieldDrain() {
-        return Number((SHIELD_COST * Math.pow(0.9, S.upgrades.shield) / cm('shield')).toFixed(1));
+        return Number((SHIELD_COST * Math.pow(0.9, lvlE('shield'))).toFixed(1));
       }
 
       // Quanto cada recurso ganha (made) e gasta (used) por segundo, sem contar os cliques.
       // Única conta usada pelo tick, pelas taxas do HUD e pela aba Data
       function flows() {
         const m = crewDrainMult(), ev = S.activeEvent && S.activeEvent.id;
-        const solar = (3.2 + S.upgrades.solar * 2) * cm('solar') * (ev === 'dust_storm' ? 0.35 : ev === 'solar_flare' ? 0.45 : 1);
+        const solar = (3.2 + lvlE('solar') * 2) * (ev === 'dust_storm' ? 0.35 : ev === 'solar_flare' ? 0.45 : 1);
         return {
-          water:  { made: bldPower('autoIce') * 2 * bldMult('autoIce'), used: S.population * waterPerAstroBase() * m + eventDrain('meteor_shower', 1.5) },
-          food:   { made: S.upgrades.greenhouse * cm('greenhouse') + bldPower('autoFood') * 2 * bldMult('autoFood'), used: S.population * 0.5 * m },
-          o2:     { made: bldPower('autoO2') * 2.5 * bldMult('autoO2'), used: S.population * o2PerAstroBase() * m },
+          water:  { made: bldProd('autoIce') * 2 * prodMult(), used: S.population * waterPerAstroBase() * m + eventDrain('meteor_shower', 1.5) },
+          food:   { made: lvlE('greenhouse') + bldProd('autoFood') * 2 * prodMult(), used: S.population * 0.5 * m },
+          o2:     { made: bldProd('autoO2') * 2.5 * prodMult(), used: S.population * o2PerAstroBase() * m },
           energy: { made: solar + autoEnergyRate(), used: eventDrain('cold_night', 2) + (S.shieldActive ? getShieldDrain() : 0) }
         };
       }
@@ -3369,19 +3380,19 @@
 
       // O que cada nível de melhoria dá (mostra "Now" e "Next" no card)
       const UPGRADE_STATS = {
-        recycler:   l => `Each astronaut drinks ${(0.5 * Math.pow(0.92, l) / cm('recycler')).toFixed(2)} Water/s`,
-        greenhouse: l => `+${r1(l * cm('greenhouse'))} Food/s`,
-        solar:      l => `+${((3.2 + l * 2) * cm('solar')).toFixed(1)} Energy/s`,
-        shield:     l => `Shield uses ${(SHIELD_COST * Math.pow(0.9, l) / cm('shield')).toFixed(1)} Energy/s`,
-        antenna:    l => `+${r1(l * 3 * bldMult('antenna'))} Science/s`,
-        o2tech:     l => `Each astronaut breathes ${(0.6 * Math.pow(0.92, l) / cm('o2tech')).toFixed(2)} Oxygen/s`,
+        recycler:   l => `Each astronaut drinks ${(0.5 * Math.pow(0.92, l + colorPower('recycler'))).toFixed(2)} Water/s`,
+        greenhouse: l => `+${r1(l + colorPower('greenhouse'))} Food/s`,
+        solar:      l => `+${(3.2 + (l + colorPower('solar')) * 2).toFixed(1)} Energy/s`,
+        shield:     l => `Shield uses ${(SHIELD_COST * Math.pow(0.9, l + colorPower('shield'))).toFixed(1)} Energy/s`,
+        antenna:    l => `+${r1((l + colorPower('antenna')) * 3 * prodMult())} Science/s`,
+        o2tech:     l => `Each astronaut breathes ${(0.6 * Math.pow(0.92, l + colorPower('o2tech'))).toFixed(2)} Oxygen/s`,
         // Construções: total de todas as cópias (conta também os upgrades individuais feitos no mapa)
-        autoIce:    l => `+${r1((l + bldPower('autoIce') - S.upgrades.autoIce) * 2 * bldMult('autoIce'))} Water/s`,
-        autoO2:     l => `+${r1((l + bldPower('autoO2') - S.upgrades.autoO2) * 2.5 * bldMult('autoO2'))} Oxygen/s`,
-        autoSci:    l => `+${r1((l + bldPower('autoSci') - S.upgrades.autoSci) * 3 * bldMult('autoSci'))} Science/s`,
-        autoEnergy: l => `+${r1((l + bldPower('autoEnergy') - S.upgrades.autoEnergy) * 3 * bldMult('autoEnergy'))} Energy/s`,
-        autoFood:   l => `+${r1((l + bldPower('autoFood') - S.upgrades.autoFood) * 2 * bldMult('autoFood'))} Food/s`,
-        habitat:    l => `+${(l + bldPower('habitat') - S.upgrades.habitat) * 5} crew space`,
+        autoIce:    l => `+${r1((l + bldProd('autoIce') - S.upgrades.autoIce) * 2 * bldMult('autoIce'))} Water/s`,
+        autoO2:     l => `+${r1((l + bldProd('autoO2') - S.upgrades.autoO2) * 2.5 * bldMult('autoO2'))} Oxygen/s`,
+        autoSci:    l => `+${r1((l + bldProd('autoSci') - S.upgrades.autoSci) * 3 * bldMult('autoSci'))} Science/s`,
+        autoEnergy: l => `+${r1((l + bldProd('autoEnergy') - S.upgrades.autoEnergy) * 3 * bldMult('autoEnergy'))} Energy/s`,
+        autoFood:   l => `+${r1((l + bldProd('autoFood') - S.upgrades.autoFood) * 2 * bldMult('autoFood'))} Food/s`,
+        habitat:    l => `+${(l + bldProd('habitat') - S.upgrades.habitat) * 5} crew space`,
         storage:    l => `+${l * 100} space in every bar`,
         autoPop:    l => `A ship with crew every ${Math.max(6, getDifficultyPhase().arrivalEvery - l * 3)}s`
       };
@@ -3452,19 +3463,56 @@
       // Desenho da árvore (redesenhada a cada segundo só enquanto a aba está aberta)
       // ---- Cores das estruturas, níveis 1 a 5: cinza → azul → verde → roxo → dourado (cores do layout) ----
       // A base principal muda de cor com o nível dela. Cada nível da base abre uma fileira nova na árvore:
-      // cada nó pinta os prédios daquele recurso com a cor nova e dá +25% de produção por nível
+      // cada nó libera, na aba Build, uma versão colorida daquela estrutura para comprar à parte
       const TIER_COLORS = [null, null, '#7bd0ff', '#34d399', '#c084fc', '#fbbf24'];
       const TIER_NAMES = ['', 'GRAY', 'BLUE', 'GREEN', 'PURPLE', 'GOLD'];
-      const TIER_COST = [0, 0, 400, 1500, 5000, 15000];
+      const TIER_COST = [0, 0, 150, 500, 1500, 4000];
       // Prédio do mapa -> estrutura da árvore (13 estruturas, cada uma com a sua cor)
       const TYPE_KEY = { waterExtractor: 'autoIce', factory: 'storage', recycler: 'recycler', greenhouseTunnel: 'autoFood', habitat: 'habitat', foodGreenhouse: 'greenhouse',
         tanks: 'autoO2', o2Station: 'o2tech', generator: 'autoEnergy', shieldDome: 'shield', solar: 'solar', lab: 'autoSci', antenna: 'antenna' };
       const tierKey = (k, t) => `tier_${k}_${t}`;
-      function keyTier(k) { let t = 1; while (t < 5 && S.tree[tierKey(k, t + 1)]) t++; return t; }
-      // Cada cor deixa a estrutura 25% mais forte (produz mais ou gasta menos); Storage e Habitat ganham espaço
-      const cm = k => 1 + (keyTier(k) - 1) * 0.25;
-      const bldMult = key => prodMult() * cm(key);
-      const tierTag = (k, t) => k === 'storage' ? '+250 space' : k === 'habitat' ? '+5 crew' : `+${(t - 1) * 25}%`;
+      const KEY_TYPE = Object.fromEntries(Object.entries(TYPE_KEY).map(([t, k]) => [k, t]));
+      // Prédios coloridos: cada cor vale mais que um prédio normal e tem o seu próprio preço,
+      // que começa em (preço base x TIER_PRICE) e sobe x1.3 a cada compra da mesma cor
+      const TIER_POWER = [0, 1, 2, 3, 5, 8];
+      const TIER_PRICE = [0, 1, 4, 12, 35, 100];
+      const cbN = (k, t) => (S.cbld || {})[`${k}@${t}`] || 0;
+      const colorPower = k => [2, 3, 4, 5].reduce((s, t) => s + cbN(k, t) * TIER_POWER[t], 0);
+      const colorCost = (k, t) => Math.round(UPGRADES_DEF[k].baseCost * TIER_PRICE[t] * Math.pow(1.3, cbN(k, t)));
+      const lvlE = k => S.upgrades[k] + colorPower(k);  // melhorias: nível do card + prédios coloridos
+      const bldProd = k => bldPower(k) + colorPower(k); // prédios: cópias + níveis + prédios coloridos
+      const bldMult = () => prodMult();
+      window.buyColor = function(k, t, e) {
+        if (S.isGameOver || inMenu) return;
+        if (!S.tree[tierKey(k, t)]) { setTopAlert('error', 'LOCKED', 'Unlock this color in the Tree tab first!'); playSound('alert'); return; }
+        const cost = colorCost(k, t);
+        if (S.science < cost) { setTopAlert('error', 'ERROR: SCIENCE', `You need ${cost} Science points! Click "Research".`); playSound('alert'); return; }
+        S.science -= cost;
+        S.cbld = S.cbld || {};
+        S.cbld[`${k}@${t}`] = cbN(k, t) + 1;
+        for (let i = 0; i < TIER_POWER[t]; i++) {
+          if (k === 'habitat') habitatSpace();
+          if (k === 'storage') { S.capWater += 100; S.capFood += 100; S.capO2 += 100; S.capEnergy += 100; }
+        }
+        setTopAlert('success', 'BUILT', `Congratulations! ${UPGRADES_DEF[k].title} ${TIER_NAMES[t]} has been built!`);
+        sfx('build');
+        spawnFloatingText((e && e.currentTarget) || document.getElementById(`cb-${k}-${t}`), 'Built!', 'text-blue-400');
+        renderHUD();
+      };
+      // Linha "Colored versions" no card de cada uma das 13 estruturas (aba Build)
+      Object.values(TYPE_KEY).forEach(k => document.getElementById(`btn-up-${k}`).closest('.res-card').insertAdjacentHTML('beforeend', `<div class="color-builds">
+          <span class="cb-title">Colored versions</span>
+          <div class="cb-row">${[2, 3, 4, 5].map(t => `<button class="cb-btn" id="cb-${k}-${t}" style="--tier:${TIER_COLORS[t]}" onclick="buyColor('${k}', ${t}, event)" type="button"><i id="cbn-${k}-${t}"></i><b>${TIER_NAMES[t]}</b><small id="cbc-${k}-${t}"></small></button>`).join('')}</div>
+          <span class="cb-title">Each one counts as 2, 3, 5 or 8 normal ones.</span></div>`));
+      function renderColorBuilds() {
+        Object.values(TYPE_KEY).forEach(k => [2, 3, 4, 5].forEach(t => {
+          const b = document.getElementById(`cb-${k}-${t}`), open = !!S.tree[tierKey(k, t)], n = cbN(k, t), cost = colorCost(k, t);
+          b.classList.toggle('locked', !open);
+          b.disabled = open && S.science < cost;
+          setText(document.getElementById(`cbc-${k}-${t}`), open ? cost : '🔒');
+          setText(document.getElementById(`cbn-${k}-${t}`), n ? `x${n}` : '');
+        }));
+      }
       const baseTier = () => Math.min(5, S.baseLevel);
       function tierReqs(res, t) {
         return [
@@ -3479,9 +3527,7 @@
         if (S.science < TIER_COST[t]) { setTopAlert('error', 'ERROR: SCIENCE', `You need ${TIER_COST[t]} Science to unlock it!`); playSound('alert'); return; }
         S.science -= TIER_COST[t];
         S.tree[tierKey(res, t)] = true;
-        if (res === 'storage') { S.capWater += 250; S.capFood += 250; S.capO2 += 250; S.capEnergy += 250; }
-        if (res === 'habitat') S.capPop += 5;
-        setTopAlert('success', 'UNLOCKED!', `${UPGRADES_DEF[res].title} got a new color and is stronger now!`);
+        setTopAlert('success', 'UNLOCKED!', `${UPGRADES_DEF[res].title} ${TIER_NAMES[t]} can now be built in the Build tab!`);
         sfx('unlock');
         renderHUD();
       };
@@ -3530,7 +3576,7 @@
           const img = document.getElementById(`btn-up-${main}`).closest('.res-card').querySelector('.build-art img, .tier-strip img');
           return `<button class="tree-node ${resOf(main)} ${done ? 'done' : ready ? 'ready' : 'locked'}" style="--res:${TIER_COLORS[t]}" onclick="unlockTier('${res}', ${t})" type="button">
             <span class="tree-img">${img && img.complete && img.naturalWidth ? `<img alt="" src="${tintURL(img, t, main)}">` : ''}${done ? '' : '<i class="lock-ico"></i>'}</span>
-            <b>${UPGRADES_DEF[main].title}</b><small class="tier-tag"><span>${TIER_NAMES[t]}</span> · ${tierTag(res, t)}</small>
+            <b>${UPGRADES_DEF[main].title}</b><small class="tier-tag"><span>${TIER_NAMES[t]}</span> · x${TIER_POWER[t]}</small>
             ${done ? '<small class="text-emerald-400">✔ Unlocked</small>' : reqs.map(([tx, ok]) => `<small class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? '✔' : '✘'} ${tx}</small>`).join('') +
               `<small class="tree-cost ${S.science >= TIER_COST[t] ? '' : 'poor'}">${TIER_COST[t]} Science</small>`}
           </button>`;
@@ -3860,6 +3906,7 @@
           capEnergy: 500,
           capPop: 5,
           bldLv: {},
+          cbld: {},
           hist: [], eventLog: [], baseLevel: 1, // aba Data: recursos a cada segundo e eventos com a escolha feita
 
           population: 2,
@@ -4137,6 +4184,7 @@
       const setHTML = (el, v) => { if (el && el.__h !== v) { el.__h = v; el.innerHTML = v; } };
 
       function renderHUD() {
+        renderColorBuilds();
         if (window.updateColonyVisual) window.updateColonyVisual();
         const diff = getDifficultyPhase();
         const shieldDrain = getShieldDrain();
@@ -4985,16 +5033,23 @@
 
           // Novo jogo (algum tipo diminuiu): recomeça a base do zero
           const have = {};
-          placed.forEach(p => { have[p.type] = (have[p.type] || 0) + 1; });
-          if (TYPES.some(t => (have[t] || 0) > want[t])) { placed = []; TYPES.forEach(t => { have[t] = 0; }); }
+          placed.forEach(p => { have[p.kind] = (have[p.kind] || 0) + 1; });
+          // Prédios coloridos comprados no Build: tipo "prédio@cor"
+          const kinds = TYPES.concat(Object.entries(S.cbld || {}).filter(([, n]) => n > 0).map(([id, n]) => {
+            const [k, t] = id.split('@'), kind = KEY_TYPE[k] + '@' + t;
+            want[kind] = n;
+            return kind;
+          }));
+          if (Object.keys(have).some(t => have[t] > (want[t] || 0))) { placed = []; for (const t in have) have[t] = 0; }
 
           // Constrói o que falta, alternando os tipos, cada prédio no próximo nó livre da rede
           let grew = true;
           while (grew && placed.length < nodes.length - 1) {
             grew = false;
-            for (const t of TYPES) {
+            for (const t of kinds) {
               if ((have[t] || 0) < want[t] && placed.length < nodes.length - 1) {
-                placed.push({ type: t, node: nodes[placed.length + 1], n: have[t] || 0 });
+                const [type, tier] = t.split('@');
+                placed.push({ kind: t, type, tier: tier ? +tier : 0, node: nodes[placed.length + 1], n: have[t] || 0 });
                 have[t] = (have[t] || 0) + 1;
                 grew = true;
               }
@@ -5044,7 +5099,7 @@
               // Prédio com upgrade individual: cresce um pouco e ganha estrelas amarelas em cima (o visual para no nível 5)
               const bl = Math.min(5, bldLevel(p));
               mw *= 1 + (bl - 1) * 0.12; mh *= 1 + (bl - 1) * 0.12;
-              drawSprite(key, x, y, mw, mh, p.type === 'antenna' ? Math.sin(animTime * 1.3 + x) * .045 : 0, 1, false, TYPE_KEY[p.type] ? keyTier(TYPE_KEY[p.type]) : 1);
+              drawSprite(key, x, y, mw, mh, p.type === 'antenna' ? Math.sin(animTime * 1.3 + x) * .045 : 0, 1, false, p.tier || 1);
               for (let s = 1; s < bl; s++) {
                 const sx = x + (s - bl / 2) * 14 - 5, sy = y - mh / 2 - 12;
                 ctx.fillStyle = '#000'; ctx.fillRect(sx - 1, sy - 1, 12, 12);
@@ -5191,7 +5246,7 @@
         // Prédios únicos (melhorias e estação de foguete): o nível é o do card no Build
         const SINGLE = Object.assign({ landing: 'autoPop', factory: 'storage' }, TIER_LVL);
         const BLD_MAX = Infinity; // sem limite de nível: o preço exponencial é o freio
-        const bldId = p => `${p.type}#${p.n}`;
+        const bldId = p => `${p.type}${p.tier ? '@' + p.tier : ''}#${p.n}`;
         function bldLevel(p) { return UPG_KEY[p.type] ? ((S.bldLv || {})[bldId(p)] || 1) : 1; }
         const bldCost = key => getUpgradeCost(key); // subir um nível custa o mesmo que construir mais um
         let selected = null;
@@ -5244,7 +5299,7 @@
         document.addEventListener('click', e => {
           if (inMenu || !(e.target === canvas || e.target.tagName === 'MAIN' || e.target.id === 'colony-panel')) return;
           const wx = (e.clientX - view.x) / view.s, wy = (e.clientY - view.y) / view.s;
-          const hit = placed.filter(p => Math.abs(wx - p.node.x) < SIZE[p.type][0] / 2 && Math.abs(wy - p.node.y) < SIZE[p.type][1] / 2)
+          const hit = placed.filter(p => !p.tier && Math.abs(wx - p.node.x) < SIZE[p.type][0] / 2 && Math.abs(wy - p.node.y) < SIZE[p.type][1] / 2)
             .sort((a, b) => b.node.y - a.node.y)[0];
           if (!hit) { if (Math.abs(wx) < 120 && Math.abs(wy) < 100) showScreen('base'); return; } // módulo central: Centro de Comando
           if (!UPG_KEY[hit.type] && !SINGLE[hit.type]) return; // todo prédio abre a própria janela de upgrade
