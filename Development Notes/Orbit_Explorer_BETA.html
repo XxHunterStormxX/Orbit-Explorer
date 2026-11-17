@@ -223,14 +223,22 @@
     .menu-enter .menu-opt:nth-child(6) { animation-delay: 1.5s; } .menu-enter .menu-opt:nth-child(7) { animation-delay: 1.65s; }
     input.nick-input[type="text"] { width: 100%; background: #0b0d1a; border: 2px solid #ffd23f; color: #fff; font-family: 'Press Start 2P', monospace; font-size: 16px; font-size-adjust: none; padding: 14px 10px; text-align: center; text-transform: uppercase; outline: none; }
     input.nick-input[type="text"]:focus { border-color: #ffd23f; box-shadow: 0 0 0 3px rgba(255, 210, 63, .35); }
+    .rank-board { position: relative; z-index: 10; width: min(92vw, 340px); margin: 0 auto 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+    @media (min-width: 1200px) { .rank-board { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); margin: 0; width: 290px; } }
+    .rank-note { font-size: 12px; color: #9aa3c7; line-height: 1.3; }
+    .rank-head { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 10px; padding: 0 10px; font-size: 12px; color: #ffd23f; }
+    .rank-board .rank-list { max-height: 46vh; overflow-y: auto; }
+    @media (max-width: 1199px) { .rank-board .rank-list { max-height: 30vh; } }
+    #retro-menu-screen.intro-pending #menu-rank { opacity: 0; }
+    .menu-enter #menu-rank { animation: fade-in .5s 1.8s both; }
     .rank-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    .rank-row { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; background: #161a2e; border: 2px solid #2c3354; }
+    .rank-row { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 10px; align-items: center; padding: 6px 10px; background: #161a2e; border: 2px solid #2c3354; }
     .rank-row.me { border-color: #34d399; }
     .rank-pos, .rank-time { font-family: 'Press Start 2P', monospace; font-size: 12px; font-size-adjust: none; color: #9aa3c7; }
     .rank-row:nth-child(1) .rank-pos { color: #ffd23f; } .rank-row:nth-child(2) .rank-pos { color: #d8dde8; } .rank-row:nth-child(3) .rank-pos { color: #e0954f; }
     .rank-time { color: #05fa5b; }
-    .rank-nick { display: block; color: #fff; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .rank-sub { display: block; color: #9aa3c7; font-size: 12px; }
+    .rank-nick { display: block; color: #fff; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-sub { display: block; color: #9aa3c7; font-size: 11px; line-height: 1.25; }
     /* Tutorial do menu */
     .tut-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
     .tut-tabs button { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 2px solid #43363d; background: #1d1726; color: #cbd5e1; font-size: 13px; }
@@ -482,11 +490,21 @@
         <button class="menu-opt hidden transition cursor-pointer" id="menu-continue" onclick="startFromMenu(true)" onmouseenter="menuHover(this)" type="button">CONTINUE</button>
         <button class="menu-opt transition cursor-pointer" onclick="askNickname()" onmouseenter="menuHover(this)" type="button">NEW GAME</button>
         <button class="menu-opt transition cursor-pointer" onclick="openTutorial()" onmouseenter="menuHover(this)" type="button">TUTORIAL</button>
-        <button class="menu-opt transition cursor-pointer" onclick="openRanking()" onmouseenter="menuHover(this)" type="button">RANKING</button>
         <button class="menu-opt transition cursor-pointer" onclick="openMenuSettings()" onmouseenter="menuHover(this)" type="button">SETTINGS</button>
         <button class="menu-opt transition cursor-pointer" onclick="openMenuExit()" onmouseenter="menuHover(this)" type="button">EXIT</button>
       </nav>
     </div>
+
+    <!-- RANKING sempre visível no menu: canto esquerdo (no celular, embaixo das opções) -->
+    <aside class="rank-board pixel-box" id="menu-rank">
+      <div class="flex items-center gap-2 border-b border-amber/40 pb-2">
+        <span class="material-symbols-outlined text-amber text-[20px]">emoji_events</span>
+        <h2 class="font-pixel text-xs text-amber">RANKING</h2>
+      </div>
+      <p class="rank-note" id="rank-note"></p>
+      <div class="rank-head"><span>#</span><span>NICKNAME</span><span>TIME</span></div>
+      <ol class="rank-list" id="rank-list"></ol>
+    </aside>
 
     <!-- Painel Pixel Art de SETTINGS (Configurações para Crianças) -->
     <!-- Configurações: abre pelo SETTINGS do menu; tudo fica salvo no navegador -->
@@ -563,23 +581,11 @@
         <h2 class="font-pixel text-xs sm:text-sm text-amber border-b border-amber/40 pb-3">YOUR NICKNAME</h2>
         <p class="text-sm text-neutral-300">Type your astronaut name. Your best survival time is saved in the ranking with it.</p>
         <input autocomplete="off" class="nick-input" id="nick-input" maxlength="12" placeholder="???" spellcheck="false" type="text">
+        <p class="hidden text-sm text-rose-400 -mt-2" id="nick-msg">That nickname is not allowed. Choose another one!</p>
         <div class="grid grid-cols-2 gap-2">
           <button class="opt-btn" onclick="closeNickname()" type="button">CANCEL</button>
           <button class="opt-btn on" onclick="confirmNickname()" type="button">START ►</button>
         </div>
-      </div>
-    </div>
-
-    <!-- RANKING: quem sobreviveu mais tempo neste aparelho (cada apelido guarda a melhor missão) -->
-    <div class="hidden fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4" id="menu-rank-panel">
-      <div class="pixel-box max-w-md w-full p-5 sm:p-6 flex flex-col gap-4 max-h-[95vh]">
-        <div class="flex items-center justify-between border-b border-amber/40 pb-3">
-          <h2 class="font-pixel text-xs sm:text-sm text-amber">RANKING</h2>
-          <button class="font-pixel text-xs text-rose-400 hover:text-white cursor-pointer" onclick="closeRanking()" type="button">[X]</button>
-        </div>
-        <p class="text-sm text-neutral-300">Longest survival on this device. Each nickname keeps its best mission.</p>
-        <ol class="rank-list flex-1 min-h-0 overflow-y-auto" id="rank-list"></ol>
-        <button class="opt-btn w-full" onclick="closeRanking()" type="button">◄ BACK</button>
       </div>
     </div>
 
@@ -2180,6 +2186,12 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['NICKNAME', 'APELIDO', 'APODO'], ['TIME', 'TEMPO', 'TIEMPO'],
+        ['Loading world ranking…', 'Carregando o ranking mundial…', 'Cargando el ranking mundial…'],
+        ['World ranking: everyone who plays, on any device.', 'Ranking mundial: todo mundo que joga, em qualquer aparelho.', 'Ranking mundial: todos los que juegan, en cualquier dispositivo.'],
+        ['No internet: showing only this device.', 'Sem internet: mostrando só este aparelho.', 'Sin internet: mostrando solo este dispositivo.'],
+        ['World ranking: position #', 'Ranking mundial: posição #', 'Ranking mundial: posición #'],
+        ['That nickname is not allowed. Choose another one!', 'Esse apelido não é permitido. Escolha outro!', '¡Ese apodo no está permitido. Elige otro!'],
         ['YOUR NICKNAME', 'SEU APELIDO', 'TU APODO'], ['CANCEL', 'CANCELAR', 'CANCELAR'], ['START ►', 'COMEÇAR ►', 'EMPEZAR ►'],
         ['Type your astronaut name. Your best survival time is saved in the ranking with it.', 'Digite seu nome de astronauta. Seu melhor tempo de sobrevivência fica salvo no ranking com ele.', 'Escribe tu nombre de astronauta. Tu mejor tiempo de supervivencia se guarda en el ranking con él.'],
         ['Longest survival on this device. Each nickname keeps its best mission.', 'Quem sobreviveu mais tempo neste aparelho. Cada apelido guarda sua melhor missão.', 'Quién sobrevivió más tiempo en este dispositivo. Cada apodo guarda su mejor misión.'],
@@ -2470,6 +2482,7 @@
         if (inMenu || S.isGameOver || !S.secondsAlive) return;
         try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {}
         recordScore();
+        pushOnline();
       }
       function deleteSaveData() {
         try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
@@ -2491,25 +2504,82 @@
         all[id] = { nick: S.nick, time: S.secondsAlive, base: S.baseLevel, pop: S.peakPopulation, sci: Math.round(S.totalSciEarned), diff: S.difficulty };
         try { localStorage.setItem(SCORE_KEY, JSON.stringify(all)); } catch (e) {}
       }
-      window.openRanking = function() {
-        playMenuSfx('select');
-        const me = playerNick.toLowerCase(), list = rankList().slice(0, 10);
+      // ---- Filtro de palavrões (português, inglês e espanhol) ----
+      // Ignora acentos, números no lugar de letras (P0RR4) e letras repetidas (MERRRDA).
+      // BAD_PART: proibido em qualquer parte do apelido | BAD_WORD: proibido como palavra inteira (curtas, para não barrar ESCUDO, COCKPIT...)
+      const BAD_PART = ['fuck', 'shit', 'bitch', 'cunt', 'dick', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'nigg', 'retard', 'porn', 'penis', 'vagina', 'boob', 'nazi', 'hitler',
+        'porra', 'caralh', 'buceta', 'boceta', 'piroca', 'merda', 'bosta', 'foda', 'fode', 'puta', 'puto', 'viad', 'cuzao', 'arromba', 'otario', 'babaca', 'imbecil', 'idiota', 'xoxota', 'xereca',
+        'punheta', 'siririca', 'corno', 'vagabund', 'safad', 'prostitut', 'estupr', 'tesao', 'fdp', 'vsf', 'pqp', 'vtnc',
+        'mierda', 'cabron', 'pendej', 'chinga', 'verga', 'joder', 'gilipolla', 'maricon', 'zorra', 'polla', 'pinche', 'culero', 'hijueputa', 'mamada'];
+      const BAD_WORD = ['cu', 'pau', 'rola', 'pinto', 'kct', 'krl', 'crl', 'tnc', 'bct', 'pica', 'culo', 'cono', 'sex', 'ass', 'cock', 'fag', 'rape'];
+      function nickBad(n) {
+        const base = n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+          .replace(/[013578$!|]/g, c => ({ 0: 'o', 1: 'i', 3: 'e', 5: 's', 7: 't', 8: 'b', $: 's', '!': 'i', '|': 'i' })[c]);
+        // @, * e 4 podem esconder qualquer vogal (F@CK, P*TA, P4U): testa cada uma
+        return ['a', 'e', 'i', 'o', 'u'].some(v => {
+          const s = base.replace(/[@*]/g, v).replace(/4/g, 'a');
+          const words = s.split(/[^a-z]+/).filter(Boolean), joined = words.join(''), squeezed = joined.replace(/(.)\1+/g, '$1');
+          return BAD_PART.some(b => joined.includes(b) || squeezed.includes(b)) || words.concat([joined, squeezed]).some(w => BAD_WORD.includes(w));
+        });
+      }
+
+      // ---- Ranking online (Firebase Firestore pela API REST, sem biblioteca extra) ----
+      // Vazio = só o ranking deste aparelho. As regras do servidor (firestore.rules) validam tudo que chega.
+      const ONLINE = { apiKey: '', projectId: '' };
+      const fsInt = v => ({ integerValue: String(Math.round(v)) });
+      function fsFetch(path, body, method = 'POST') {
+        const ctl = new AbortController();
+        setTimeout(() => ctl.abort(), 7000);
+        return fetch(`https://firestore.googleapis.com/v1/projects/${ONLINE.projectId}/databases/(default)/documents${path}?key=${ONLINE.apiKey}`,
+          { method, body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' }, signal: ctl.signal })
+          .then(r => r.ok ? r.json() : Promise.reject(r.status));
+      }
+      // 10 maiores tempos do mundo
+      async function onlineTop() {
+        const rows = await fsFetch(':runQuery', { structuredQuery: { from: [{ collectionId: 'scores' }], orderBy: [{ field: { fieldPath: 'time' }, direction: 'DESCENDING' }], limit: 10 } });
+        return rows.filter(r => r.document).map(({ document: { fields: f } }) => ({
+          nick: f.nick.stringValue, time: +f.time.integerValue, base: +f.base.integerValue, pop: +f.pop.integerValue, sci: +f.sci.integerValue, diff: f.diff.stringValue }));
+      }
+      // Posição no mundo = quantos têm tempo maior + 1
+      async function onlinePos(time) {
+        const r = await fsFetch(':runAggregationQuery', { structuredAggregationQuery: {
+          structuredQuery: { from: [{ collectionId: 'scores' }], where: { fieldFilter: { field: { fieldPath: 'time' }, op: 'GREATER_THAN', value: fsInt(time) } } },
+          aggregations: [{ alias: 'n', count: {} }] } });
+        return +r[0].result.aggregateFields.n.integerValue + 1;
+      }
+      // Manda o melhor tempo deste apelido (no máximo a cada 30 s; force = fim de jogo / volta ao menu).
+      // O servidor só aceita se for maior que o tempo que já está lá.
+      let lastPush = 0;
+      function pushOnline(force) {
+        const b = S.nick && loadScores()[S.nick.toLowerCase()];
+        if (!ONLINE.projectId || !b || (!force && Date.now() - lastPush < 30000)) return Promise.resolve();
+        lastPush = Date.now();
+        return fsFetch(`/scores/${encodeURIComponent(b.nick.toLowerCase())}`, { fields: {
+          nick: { stringValue: b.nick }, time: fsInt(b.time), base: fsInt(b.base), pop: fsInt(b.pop), sci: fsInt(b.sci), diff: { stringValue: b.diff } } }, 'PATCH').catch(() => {});
+      }
+
+      function renderRank(list, note) {
+        const me = playerNick.toLowerCase();
+        document.getElementById('rank-note').textContent = note;
         document.getElementById('rank-list').innerHTML = list.length ? list.map((r, i) => `
           <li class="rank-row${r.nick.toLowerCase() === me ? ' me' : ''}">
             <span class="rank-pos">${i + 1}</span>
-            <span class="min-w-0"><b class="rank-nick">${esc(r.nick)}</b><span class="rank-sub"><span>${baseName(r.base)}</span> · <span>${DIFF_NAME[r.diff] || ''}</span> · <span>${r.pop} astronauts</span></span></span>
+            <span class="min-w-0"><b class="rank-nick">${esc(r.nick)}</b><span class="rank-sub"><span>${baseName(r.base)}</span> · <span>${DIFF_NAME[r.diff] || ''}</span></span></span>
             <span class="rank-time">${fmtTime(r.time)}</span>
           </li>`).join('') : '<p class="text-neutral-400 text-sm">No missions yet. Play to enter the ranking!</p>';
-        document.getElementById('menu-rank-panel').classList.remove('hidden');
-      };
-      window.closeRanking = function() {
-        playMenuSfx('select');
-        document.getElementById('menu-rank-panel').classList.add('hidden');
+      }
+      window.refreshRanking = function() {
+        const local = () => rankList().slice(0, 10);
+        renderRank(local(), ONLINE.projectId ? 'Loading world ranking…' : 'Longest survival on this device. Each nickname keeps its best mission.');
+        if (ONLINE.projectId) onlineTop()
+          .then(l => renderRank(l, 'World ranking: everyone who plays, on any device.'))
+          .catch(() => renderRank(local(), 'No internet: showing only this device.'));
       };
       window.askNickname = function() {
         playMenuSfx('select');
         const inp = document.getElementById('nick-input');
         inp.value = playerNick;
+        document.getElementById('nick-msg').classList.add('hidden');
         document.getElementById('menu-nick-panel').classList.remove('hidden');
         setTimeout(() => { inp.focus(); inp.select(); }, 50);
       };
@@ -2518,8 +2588,11 @@
         document.getElementById('menu-nick-panel').classList.add('hidden');
       };
       window.confirmNickname = function() {
-        const inp = document.getElementById('nick-input'), v = inp.value.trim().replace(/\s+/g, ' ').toUpperCase().slice(0, 12);
-        if (!v) { playSound('alert'); inp.focus(); return; }
+        const inp = document.getElementById('nick-input'), raw = inp.value;
+        const v = raw.toUpperCase().replace(/[^A-Z0-9ÀÁÂÃÇÉÊÍÓÔÕÚÜÑ _-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+        const bad = nickBad(raw) || nickBad(v);
+        document.getElementById('nick-msg').classList.toggle('hidden', !bad);
+        if (!v || bad) { playSound('alert'); inp.focus(); return; }
         playerNick = v;
         try { localStorage.setItem(NICK_KEY, v); } catch (e) {}
         document.getElementById('menu-nick-panel').classList.add('hidden');
@@ -2588,6 +2661,8 @@
 
       window.returnToMenu = function() {
         saveGame();
+        refreshRanking();
+        pushOnline(true).then(refreshRanking);
         inMenu = true;
         playSound('click');
         document.getElementById('modal-gameover').classList.add('hidden');
@@ -3105,6 +3180,7 @@
         const menu = document.getElementById('retro-menu-screen');
         menu.classList.remove('intro-pending');
         menu.classList.add('menu-enter');
+        refreshRanking();
         launchDone = true;
         // Sons do menu entrando: acorde no título e um blip para cada botão (mesmo ritmo da animação)
         sfx('title');
@@ -3118,10 +3194,6 @@
         if (inMenu) {
           if (!document.getElementById('menu-nick-panel').classList.contains('hidden')) { // apelido: Enter começa, Esc volta
             if (e.key === 'Enter') confirmNickname(); else if (e.key === 'Escape') closeNickname();
-            return;
-          }
-          if (!document.getElementById('menu-rank-panel').classList.contains('hidden')) {
-            if (e.key === 'Enter' || e.key === 'Escape') closeRanking();
             return;
           }
           if (!document.getElementById('menu-tutorial-panel').classList.contains('hidden')) { // tutorial: setas trocam a página
@@ -3657,7 +3729,9 @@
         const pos = S.nick ? rankList().findIndex(r => r.nick.toLowerCase() === S.nick.toLowerCase()) + 1 : 0;
         document.getElementById('go-rank').innerHTML = !S.nick ? '' : `<b class="text-amber" id="go-nick">${esc(S.nick)}</b> · `
           + (S.secondsAlive > (S.bestBefore || 0) ? '<b class="text-amber">NEW RECORD!</b>' : `<span>Your best:</span> <b class="text-[#05fa5b]">${fmtTime(bestOf(S.nick))}</b>`)
-          + ` · <span>Position ${pos} in the ranking</span>`;
+          + ` · <span id="go-pos">Position ${pos} in the ranking</span>`;
+        if (ONLINE.projectId && S.nick) pushOnline(true).then(() => onlinePos(bestOf(S.nick)))
+          .then(p => { document.getElementById('go-pos').textContent = `World ranking: position ${p}`; }).catch(() => {});
 
         document.getElementById('modal-gameover').classList.remove('hidden');
       }
@@ -5188,6 +5262,7 @@
         'chart-bar': 'M13 5h2v14h-2V5zm-2 4H9v10h2V9zm-4 4H5v6h2v-6zm12 0h-2v6h2v-6z'
       };
       const PX_BITMAPS = {
+        trophy: ['###########', '#.#######.#', '#.#######.#', '.#.#####.#.', '..#######..', '...#####...', '....###....', '.....#.....', '....###....', '...#####...', '..#######..'],
         snowflake: ['.....#.....', '.#..###..#.', '..#..#..#..', '...#.#.#...', '.#..###..#.', '###########', '.#..###..#.', '...#.#.#...', '..#..#..#..', '.#..###..#.', '.....#.....'],
         plant: ['.......##..', '..##..####.', '.####.###..', '..###.#....', '....#.#....', '.....#.....', '..#######..', '..#######..', '...#####...', '...#####...', '....###....'],
         flask: ['...#####...', '....#.#....', '....#.#....', '...#...#...', '..#.....#..', '.#.......#.', '#.........#', '###########', '####.######', '######.####', '###########'],
@@ -5223,7 +5298,7 @@
         satellite_alt: 'satellite', settings_input_antenna: 'radio-tower', cell_tower: 'radio-signal',
         security: 'shield', shield: 'shield', solar_power: 'sun-alt', sunny: 'sun', touch_app: 'mouse',
         volume_up: 'volume-3', volume_off: 'volume-x', warning: 'warning-box', error: 'alert',
-        water_drop: 'drop', water_ec: 'drop-half'
+        water_drop: 'drop', water_ec: 'drop-half', emoji_events: 'trophy'
       };
       const iconCache = {};
 

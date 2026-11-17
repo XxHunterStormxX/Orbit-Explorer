@@ -1,0 +1,28 @@
+rules_version = '2';
+// Regras do ranking online do Orbit Explorer (Firebase > Firestore Database > Regras: colar e Publicar)
+// - Qualquer um pode LER o ranking.
+// - Só aceita ESCREVER um tempo válido e MAIOR que o que já está salvo para aquele apelido.
+// - Apelido: 1 a 12 letras/números (sem palavrões); ninguém pode apagar nada.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scores/{id} {
+      allow read: if true;
+      allow create, update: if valid(request.resource.data, id)
+        && (resource == null || request.resource.data.time > resource.data.time);
+      allow delete: if false;
+    }
+  }
+}
+
+function valid(d, id) {
+  return d.keys().hasOnly(['nick', 'time', 'base', 'pop', 'sci', 'diff'])
+    && d.nick is string && d.nick.size() >= 1 && d.nick.size() <= 12
+    && d.nick.matches('^[A-Z0-9ÀÁÂÃÇÉÊÍÓÔÕÚÜÑ _-]+$')
+    && d.nick.lower() == id
+    && !d.nick.lower().matches('.*(fuck|shit|bitch|cunt|dick|pussy|asshole|bastard|slut|whore|nigg|retard|porn|penis|vagina|boob|nazi|hitler|porra|caralh|buceta|boceta|piroca|merda|bosta|foda|fode|puta|puto|viad|cuzao|arromba|otario|babaca|imbecil|idiota|xoxota|xereca|punheta|siririca|corno|vagabund|safad|prostitut|estupr|tesao|fdp|vsf|pqp|vtnc|mierda|cabron|pendej|chinga|verga|joder|gilipolla|maricon|zorra|polla|pinche|culero|hijueputa|mamada).*')
+    && d.time is int && d.time > 0 && d.time <= 86400
+    && d.base is int && d.base >= 1 && d.base <= 100
+    && d.pop is int && d.pop >= 0 && d.pop <= 100000
+    && d.sci is int && d.sci >= 0
+    && d.diff in ['easy', 'normal', 'hard'];
+}
