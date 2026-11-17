@@ -369,6 +369,8 @@
     .tree-img .lock-ico { position:absolute; width:24px; height:30px; right:-14px; bottom:-4px; }
     .tree-cost { margin-top:3px; padding:2px 8px; background:rgba(0,0,0,.35); color:#c354ff; font-weight:700; }
     .tree-cost.poor { color:#fb7185; }
+    .pop-over { color:#ff4d4d !important; animation: pop-blink .8s steps(2) infinite; }
+    @keyframes pop-blink { 50% { opacity:.35; } }
     .tree-node.done { background:color-mix(in srgb, var(--res) 18%, #1d1726); }
     .tree-node.ready { animation: tree-pulse 1.4s ease-in-out infinite; cursor:pointer; }
     .tree-node.locked { border-color:#4b4458; }
@@ -1980,8 +1982,12 @@
       function crewSciRate() {
         const ev = S.activeEvent;
         if (ev && ev.sheltered) return 0;
-        return S.population * (ev && ev.id === 'sick_crew' ? 0.5 : 1);
+        // Base lotada: quem está sem lugar não pesquisa e o resto rende só metade
+        return Math.min(S.population, S.capPop) * (ev && ev.id === 'sick_crew' ? 0.5 : 1) * (overcrowd() ? 0.5 : 1);
       }
+      // Astronautas acima do limite de vagas (cada um tira Health por segundo)
+      const OVERCROWD_MAX = 4;
+      function overcrowd() { return Math.max(0, S.population - S.capPop); }
 
       // Upgrade individual: cada prédio do Build sobe de nível clicando nele no mapa (sem limite).
       // Cada nível extra produz o mesmo que mais um prédio daquele tipo. Níveis ficam em S.bldLv["tipo#n"].
@@ -2503,7 +2509,7 @@
       // o nó de cima + nível de clique e/ou nível da base. Destravar o nó libera o prédio no Build.
       const TREE_COLS = [
         [['autoIce', 15, { click: ['clickIce', 1] }], ['storage', 60, {}], ['recycler', 150, { base: 2 }]],
-        [['autoFood', 15, { click: ['clickFood', 1] }], ['habitat', 60, {}], ['greenhouse', 150, { base: 2 }]],
+        [['autoFood', 15, { click: ['clickFood', 1] }], ['habitat', 30, {}], ['greenhouse', 150, { base: 2 }]],
         [['autoO2', 15, { click: ['clickO2', 1] }], ['o2tech', 120, { click: ['clickO2', 3] }]],
         [['autoEnergy', 15, { click: ['clickSolar', 1] }], ['shield', 60, {}], ['solar', 150, { base: 2 }]],
         [['autoSci', 25, { click: ['clickSci', 1] }], ['antenna', 200, { base: 3 }]]
@@ -3057,6 +3063,10 @@
           healthDamage += 4 * drainMult;
           failReasons.push('Radiation became too high');
         }
+        if (overcrowd() > 0) {
+          healthDamage += overcrowd() * drainMult;
+          failReasons.push(`${overcrowd()} astronaut${overcrowd() > 1 ? 's have' : ' has'} no room (build a Habitat Module)`);
+        }
 
         if (healthDamage > 0) {
           S.health = Math.max(0, S.health - healthDamage);
@@ -3123,14 +3133,14 @@
           S.nextArrivalCountdown = Math.max(6, diff.arrivalEvery - S.upgrades.autoPop * 3);
           window.launchRocket(); // foguete pousa na estação trazendo a tripulação
           const wanted = diff.phase === 1 ? 1 : diff.phase === 2 ? 1 + Math.floor(Math.random() * 2) : 2;
-          const arriving = Math.min(wanted, S.capPop - S.population);
+          // A nave pousa mesmo com a base cheia (até OVERCROWD_MAX pessoas sem lugar)
+          const arriving = Math.min(wanted, S.capPop + OVERCROWD_MAX - S.population);
           if (arriving > 0) {
             S.population += arriving;
             if (S.population > S.peakPopulation) S.peakPopulation = S.population;
-            playSound('upgrade');
-            if (!S.activeEvent) setTopAlert('warning', 'NEW CREW', `A spacecraft brought ${arriving} new astronaut${arriving > 1 ? 's' : ''}! More people eat more: harvest more Food!`);
-          } else if (!S.activeEvent) {
-            setTopAlert('warning', 'BASE FULL', 'A spacecraft arrived, but the base is full! Buy the Habitat Module to make room.');
+            playSound(overcrowd() ? 'alert' : 'upgrade');
+            if (overcrowd()) setTopAlert('error', 'BASE OVERCROWDED', `${overcrowd()} astronaut${overcrowd() > 1 ? 's have' : ' has'} no bed! They lose Health and Science drops. Build a Habitat Module!`);
+            else if (!S.activeEvent) setTopAlert('warning', 'NEW CREW', `A spacecraft brought ${arriving} new astronaut${arriving > 1 ? 's' : ''}! More people eat more: harvest more Food!`);
           }
         }
 
@@ -3178,6 +3188,7 @@
         // População e VIDA EM VERDE (Amarelo em atenção, Vermelho em perigo)
         document.getElementById('hud-pop').textContent = S.population;
         document.getElementById('hud-pop-cap').textContent = fmtCap(S.capPop);
+        document.getElementById('hud-pop').parentElement.classList.toggle('pop-over', overcrowd() > 0);
         document.getElementById('label-pop-ratio').textContent = `${S.population} / ${fmtCap(S.capPop)} Astronauts`;
         document.getElementById('hud-health-pct').textContent = `${Math.round(S.health)}%`;
 
