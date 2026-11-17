@@ -12,6 +12,8 @@
 > **Important:** These notes document work carried out after the NASA Space Apps Challenge event and are separate from the original project submission. They provide transparency about the project's continued development and make it possible to track its evolution over time.
 >
 > For information about changes and improvements made after the event, please refer to `Development Notes/`.
+>
+> **Final version:** the final post-event version of the game is inside the `Development Notes/` folder: [`Development Notes/Orbit_Explorer_Final_Version.html`](Development%20Notes/Orbit_Explorer_Final_Version.html) ([play online](https://xxhunterstormxx.github.io/Orbit-Explorer/Development%20Notes/Orbit_Explorer_Final_Version.html)). The original submission (`index.html`) remains unchanged.
 
 ORbit Explorer is an educational space-colony management game prototype. Players make resource and survival decisions while developing a settlement on Mars. The project combines a playable HTML prototype with a presentation and supporting documentation.
 
@@ -27,7 +29,7 @@ This repository is organized so visitors, teammates, and evaluators can quickly 
 | `ORBITA EXPLORER - English.pdf` | The team's project presentation in PDF format. | **This is the presentation for reviewers.** It introduces the project, explains the problem and proposed solution, shows the game concept and features, and communicates the intended impact and next steps. |
 | `Documentação/` | Markdown documentation about the project, gameplay, implementation, scientific context, limitations, and submission information. | Provides written detail that does not fit into the presentation slides. |
 | `Referências/` | Sources and credits used by the project. | Helps readers identify external references, data sources, and third-party resources. |
-| `Development Notes/` | Post-event development notes and programming updates. | Documents ongoing development, improvements, bug fixes, and technical changes made after the NASA Space Apps Challenge event. |
+| `Development Notes/` | Post-event development notes and programming updates, including the **final version of the game** (`Orbit_Explorer_Final_Version.html`). | Documents ongoing development, improvements, bug fixes, and technical changes made after the NASA Space Apps Challenge event. |
 | `README.md` | This guide to the repository. | Starting point for anyone visiting the project. |
 
 ## How to Run the Game
@@ -69,7 +71,7 @@ Please consult the scientific-context and implementation documentation for the e
 3. Play `index.html`.
 4. Read the files in `Documentação/` for technical and scientific details.
 5. Review `Referências/` for sources and credits.
-6. Visit `Development Notes/` to follow post-event development updates and programming progress.
+6. Visit `Development Notes/` to follow post-event development updates and programming progress, and play the final version (`Orbit_Explorer_Final_Version.html`).
 
 ## Team
 
