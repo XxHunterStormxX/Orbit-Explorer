@@ -490,6 +490,16 @@
           <button class="font-pixel text-xs text-rose-400 hover:text-white cursor-pointer" onclick="closeMenuSettings()" type="button">[X]</button>
         </div>
 
+        <!-- Idioma -->
+        <div class="space-y-2">
+          <label class="font-pixel text-[10px] text-emerald-400 block">LANGUAGE:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="opt-btn" data-set="lang" data-val="en" onclick="setOption('lang', 'en')" type="button">English</button>
+            <button class="opt-btn" data-set="lang" data-val="pt" onclick="setOption('lang', 'pt')" type="button">Português</button>
+            <button class="opt-btn" data-set="lang" data-val="es" onclick="setOption('lang', 'es')" type="button">Español</button>
+          </div>
+        </div>
+
         <!-- Dificuldade -->
         <div class="space-y-2">
           <label class="font-pixel text-[10px] text-emerald-400 block">DIFFICULTY:</label>
@@ -1893,12 +1903,128 @@
           ${li('touch_app', '#ffd23f', 'Keys: <kbd>1</kbd>-<kbd>5</kbd> click buttons, <kbd>6</kbd> shield. In the menu: arrows and <kbd>Enter</kbd>.')}</ul>
           <p class="tut-tip">Good luck, Commander! Press NEW GAME to start your mission.</p>`]
       ];
+      // Tutorial em português e espanhol: [aba, título, texto] na mesma ordem das páginas em inglês
+      const TUTORIAL_TR = {
+        pt: [
+          ['Missão', 'SUA MISSÃO', `<p>Você comanda uma base em <b>Marte</b>. Mantenha seus astronautas vivos pelo máximo de tempo que conseguir!</p>
+            <ul>${li('favorite', '#ff4d4d', 'A barra de <b>Vida</b> no topo é a vida da base. Se ela chegar a <b>0%</b>, a missão acaba.')}
+            ${li('schedule', '#7bd0ff', 'O jogo <b>nunca fica fácil</b>: o tempo passa, chegam mais astronautas, as tempestades ficam mais fortes e a tripulação gasta mais.')}
+            ${li('favorite', '#34d399', 'A Vida volta devagar quando Água, Comida e Oxigênio estão acima de 25 e a Radiação está abaixo de 50.')}</ul>`],
+          ['Recursos', 'RECURSOS', `<p>Os cards no topo mostram o que a base tem. A barra mostra o quanto está cheia, e o número como <b>-0.8/s</b> mostra quanto entra ou sai a cada segundo.</p>
+            <ul>${li('water_drop', '#7bd0ff', '<b>Água</b>, <b>Comida</b> e <b>Oxigênio</b>: a tripulação usa o tempo todo. Se um chegar a 0, a Vida cai rápido!')}
+            ${li('bolt', '#69a7bf', '<b>Energia</b>: liga as máquinas, os cliques e o escudo.')}
+            ${li('radiology', '#6bfa05', '<b>Radiação</b>: vem do espaço e não para de subir. Acima de <b>85</b> ela machuca a tripulação.')}
+            ${li('psychology', '#c354ff', '<b>Ciência</b>: é o seu dinheiro! Use para melhorar, desbloquear e construir.')}</ul>
+            <p class="tut-tip">Um card fica amarelo quando algo está acabando. Aja antes de zerar!</p>`],
+          ['Cliques', 'BOTÕES DE CLIQUE', `<p>Os 5 botões grandes embaixo fazem recursos. Cada clique <b>dá</b> uma coisa mas <b>custa</b> outra, então é preciso equilibrar:</p>
+            <ul>${li('ac_unit', '#7bd0ff', '<kbd>1</kbd> <b>Derreter Gelo</b>: +Água, custa Energia.')}
+            ${li('eco', '#e0a82e', '<kbd>2</kbd> <b>Colher Plantas</b>: +Comida, custa Energia.')}
+            ${li('air', '#34d399', '<kbd>3</kbd> <b>Gerar Oxigênio</b>: +Oxigênio, custa Água e Energia.')}
+            ${li('solar_power', '#ffd23f', '<kbd>4</kbd> <b>Painel Solar</b>: +Energia, custa Ciência.')}
+            ${li('biotech', '#c354ff', '<kbd>5</kbd> <b>Pesquisar</b>: +Ciência, custa Energia.')}</ul>
+            <p class="tut-tip">Dá para clicar com o mouse, tocar no celular ou apertar as teclas de número.</p>`],
+          ['Escudo', 'ESCUDO DE RADIAÇÃO', `<p>O botão <b>ESCUDO</b> (embaixo à direita, ou tecla <kbd>6</kbd>) protege a base da radiação.</p>
+            <ul>${li('shield', '#7bd0ff', 'Enquanto está <b>ON</b>, a Radiação desce rápido, mas ele gasta muita <b>Energia</b> por segundo.')}
+            ${li('radiology', '#6bfa05', 'As bordas da tela ficam <b>verdes</b> quando a Radiação sobe. Acima de 75 aparece o aviso <b>RADIAÇÃO ALTA</b> e o contador Geiger começa a estalar.')}
+            ${li('bolt', '#ff4d4d', 'Se a Energia acabar, o escudo desliga sozinho.')}</ul>
+            <p class="tut-tip">Ligue quando a Radiação estiver alta e desligue quando estiver baixa, para economizar Energia.</p>`],
+          ['Melhorias de clique', 'CONSTRUIR: MELHORIAS DE CLIQUE', `<p>Abra a aba <b>Construir</b>. A primeira aba, <b>Clique</b>, deixa seus botões mais fortes. São baratas: comece por aqui!</p>
+            <ul>${li('touch_app', '#ffd23f', 'Picareta de Gelo, Luvas de Colheita, Eletrolisador Turbo, Escova de Painel e Caderno de Campo: cada uma dá <b>mais por clique</b>.')}
+            ${li('smart_toy', '#ffd23f', '<b>Clique Automático</b>: um robozinho clica por você, sempre no que a base mais precisa. Mas cada nível faz a tripulação gastar <b>15% a mais</b>!')}</ul>`],
+          ['Árvore', 'ÁRVORE DE HABILIDADES', `<p>A maioria dos prédios começa <b>trancada</b> <i class="lock-ico"></i>. Abra a aba <b>Árvore</b> para desbloquear com Ciência.</p>
+            <ul>${li('touch_app', '#ffd23f', 'A árvore começa no <b>CLIQUE</b> e tem um galho para cada recurso.')}
+            ${li('check_circle', '#34d399', 'Cada nó mostra o que precisa: o nó de cima, um nível de melhoria de clique ou um <b>nível da Base</b>.')}
+            ${li('star', '#ffd23f', 'O nó que está pronto <b>pisca</b>. Clique nele para desbloquear o prédio e depois construa na aba Construir.')}</ul>`],
+          ['Prédios', 'PRÉDIOS', `<p>Os prédios trabalham <b>sozinhos</b>, a cada segundo, sem cliques.</p>
+            <ul>${li('water_drop', '#7bd0ff', 'Perfuratriz de Gelo, Túnel de Plantio, Gerador de Oxigênio, Usina de Energia e Laboratório fazem recursos.')}
+            ${li('home', '#c084fc', '<b>Módulo Habitacional</b>: +5 vagas para astronautas. <b>Depósito</b>: +100 de espaço em cada barra.')}
+            ${li('domain', '#ffd23f', 'Clique num prédio <b>no mapa</b> para melhorá-lo. Cada prédio ou nível novo custa mais que o anterior.')}</ul>`],
+          ['Tripulação', 'TRIPULAÇÃO', `<p>Naves da Terra pousam na plataforma e trazem novos astronautas.</p>
+            <ul>${li('psychology', '#c354ff', 'Mais astronautas fazem <b>mais Ciência</b>, mas também comem, bebem e respiram mais.')}
+            ${li('error', '#ff4d4d', 'Se a base estiver cheia, a nave pousa mesmo assim! Astronautas <b>sem lugar</b> perdem Vida a cada segundo e a Ciência cai. O contador da tripulação pisca vermelho.')}
+            ${li('home', '#34d399', 'Construa <b>Módulos Habitacionais</b> antes de a base lotar.')}</ul>`],
+          ['Nível da base', 'BASE: CENTRO DE COMANDO', `<p>A aba <b>Base</b> faz sua base crescer: Posto Avançado, Assentamento, Colônia, Cidade e Metrópole.</p>
+            <ul>${li('bolt', '#34d399', 'Cada nível faz todos os prédios produzirem <b>25% a mais</b> e dá mais espaço nas barras.')}
+            ${li('domain', '#ffd23f', 'É bem caro e precisa de um número mínimo de prédios.')}
+            ${li('warning', '#ff4d4d', 'Uma base maior também gasta mais suprimentos!')}</ul>`],
+          ['Eventos', 'EVENTOS', `<p>Às vezes aparece um <b>ALERTA</b> com sirene: tempestades solares, de poeira, astronauta doente e mais. Eles são inspirados em dados reais de clima espacial da NASA!</p>
+            <ul>${li('check_circle', '#ffd23f', 'O jogo espera enquanto você <b>escolhe</b> o que fazer.')}
+            ${li('warning', '#ff4d4d', 'Toda escolha custa alguma coisa. Pense no que sua base pode gastar agora.')}</ul>`],
+          ['Dados', 'ABA DADOS', `<p>A aba <b>Dados</b> mostra como sua base está indo.</p>
+            <ul>${li('chart-bar', '#7bd0ff', 'Um gráfico dos seus recursos nos últimos 3 minutos. Linhas vermelhas tracejadas marcam os eventos.')}
+            ${li('bolt', '#34d399', 'Uma tabela com o que é <b>feito</b> e <b>gasto</b> a cada segundo, e a lista dos eventos e das suas escolhas.')}
+            ${li('group', '#c084fc', 'Sua tripulação e quanto cada astronauta gasta.')}</ul>`],
+          ['Salvar e teclas', 'SALVAR, CONFIGURAÇÕES E TECLAS', `<ul>${li('check_circle', '#34d399', 'O jogo <b>salva sozinho</b> a cada 5 segundos. A casinha volta ao menu e também salva. Use <b>CONTINUAR</b> para jogar de novo.')}
+            ${li('pause', '#cbd5e1', 'O botão de pause para o jogo. O jogo também pausa quando você sai da página.')}
+            ${li('star', '#ffd23f', '<b>CONFIGURAÇÕES</b>: escolha o idioma, Explorer (fácil), Astronaut (normal) ou Commander (difícil), e ligue ou desligue música e sons.')}
+            ${li('touch_app', '#ffd23f', 'Teclas: <kbd>1</kbd>-<kbd>5</kbd> botões de clique, <kbd>6</kbd> escudo. No menu: setas e <kbd>Enter</kbd>.')}</ul>
+            <p class="tut-tip">Boa sorte, Comandante! Aperte NOVO JOGO para começar sua missão.</p>`]
+        ],
+        es: [
+          ['Misión', 'TU MISIÓN', `<p>Comandas una base en <b>Marte</b>. ¡Mantén vivos a tus astronautas el mayor tiempo posible!</p>
+            <ul>${li('favorite', '#ff4d4d', 'La barra de <b>Vida</b> de arriba es la vida de la base. Si llega a <b>0%</b>, la misión termina.')}
+            ${li('schedule', '#7bd0ff', 'El juego <b>nunca se vuelve fácil</b>: pasa el tiempo, llegan más astronautas, las tormentas son más fuertes y la tripulación gasta más.')}
+            ${li('favorite', '#34d399', 'La Vida vuelve despacio cuando Agua, Comida y Oxígeno están por encima de 25 y la Radiación por debajo de 50.')}</ul>`],
+          ['Recursos', 'RECURSOS', `<p>Las tarjetas de arriba muestran lo que tiene la base. La barra muestra qué tan llena está, y el número como <b>-0.8/s</b> muestra cuánto entra o sale cada segundo.</p>
+            <ul>${li('water_drop', '#7bd0ff', '<b>Agua</b>, <b>Comida</b> y <b>Oxígeno</b>: la tripulación los usa todo el tiempo. ¡Si uno llega a 0, la Vida baja rápido!')}
+            ${li('bolt', '#69a7bf', '<b>Energía</b>: mueve las máquinas, los clics y el escudo.')}
+            ${li('radiology', '#6bfa05', '<b>Radiación</b>: viene del espacio y sigue subiendo. Por encima de <b>85</b> daña a la tripulación.')}
+            ${li('psychology', '#c354ff', '<b>Ciencia</b>: ¡es tu dinero! Úsala para mejorar, desbloquear y construir.')}</ul>
+            <p class="tut-tip">Una tarjeta se pone amarilla cuando algo se está acabando. ¡Actúa antes de que llegue a cero!</p>`],
+          ['Clics', 'BOTONES DE CLIC', `<p>Los 5 botones grandes de abajo hacen recursos. Cada clic <b>da</b> una cosa pero <b>cuesta</b> otra, así que hay que equilibrarlos:</p>
+            <ul>${li('ac_unit', '#7bd0ff', '<kbd>1</kbd> <b>Derretir Hielo</b>: +Agua, cuesta Energía.')}
+            ${li('eco', '#e0a82e', '<kbd>2</kbd> <b>Cosechar Plantas</b>: +Comida, cuesta Energía.')}
+            ${li('air', '#34d399', '<kbd>3</kbd> <b>Generar Oxígeno</b>: +Oxígeno, cuesta Agua y Energía.')}
+            ${li('solar_power', '#ffd23f', '<kbd>4</kbd> <b>Panel Solar</b>: +Energía, cuesta Ciencia.')}
+            ${li('biotech', '#c354ff', '<kbd>5</kbd> <b>Investigar</b>: +Ciencia, cuesta Energía.')}</ul>
+            <p class="tut-tip">Puedes hacer clic con el ratón, tocar en el móvil o pulsar las teclas de números.</p>`],
+          ['Escudo', 'ESCUDO DE RADIACIÓN', `<p>El interruptor <b>ESCUDO</b> (abajo a la derecha, o tecla <kbd>6</kbd>) protege la base de la radiación.</p>
+            <ul>${li('shield', '#7bd0ff', 'Mientras está en <b>ON</b>, la Radiación baja rápido, pero gasta mucha <b>Energía</b> cada segundo.')}
+            ${li('radiology', '#6bfa05', 'Los bordes de la pantalla se ponen <b>verdes</b> cuando sube la Radiación. Por encima de 75 aparece el aviso <b>RADIACIÓN ALTA</b> y suena el contador Geiger.')}
+            ${li('bolt', '#ff4d4d', 'Si se acaba la Energía, el escudo se apaga solo.')}</ul>
+            <p class="tut-tip">Enciéndelo cuando la Radiación esté alta y apágalo cuando esté baja, para ahorrar Energía.</p>`],
+          ['Mejoras de clic', 'CONSTRUIR: MEJORAS DE CLIC', `<p>Abre la pestaña <b>Construir</b>. La primera pestaña, <b>Clic</b>, hace tus botones más fuertes. Son baratas: ¡empieza aquí!</p>
+            <ul>${li('touch_app', '#ffd23f', 'Pico de Hielo, Guantes de Cosecha, Electrolizador Turbo, Cepillo de Paneles y Cuaderno de Campo: cada una da <b>más por clic</b>.')}
+            ${li('smart_toy', '#ffd23f', '<b>Clic Automático</b>: un robotito hace clic por ti, siempre en lo que la base más necesita. ¡Pero cada nivel hace que la tripulación gaste un <b>15% más</b>!')}</ul>`],
+          ['Árbol', 'ÁRBOL DE HABILIDADES', `<p>La mayoría de los edificios empiezan <b>bloqueados</b> <i class="lock-ico"></i>. Abre la pestaña <b>Árbol</b> para desbloquearlos con Ciencia.</p>
+            <ul>${li('touch_app', '#ffd23f', 'El árbol empieza en <b>CLIC</b> y tiene una rama para cada recurso.')}
+            ${li('check_circle', '#34d399', 'Cada nodo muestra lo que necesita: el nodo de arriba, un nivel de mejora de clic o un <b>nivel de Base</b>.')}
+            ${li('star', '#ffd23f', 'El nodo que está listo <b>parpadea</b>. Haz clic en él para desbloquear el edificio y luego constrúyelo en la pestaña Construir.')}</ul>`],
+          ['Edificios', 'EDIFICIOS', `<p>Los edificios trabajan <b>solos</b>, cada segundo, sin clics.</p>
+            <ul>${li('water_drop', '#7bd0ff', 'Taladro de Hielo, Túnel de Cultivo, Generador de Oxígeno, Planta de Energía y Laboratorio hacen recursos.')}
+            ${li('home', '#c084fc', '<b>Módulo Habitacional</b>: +5 plazas para astronautas. <b>Depósito</b>: +100 de espacio en cada barra.')}
+            ${li('domain', '#ffd23f', 'Haz clic en un edificio <b>en el mapa</b> para mejorarlo. Cada edificio o nivel nuevo cuesta más que el anterior.')}</ul>`],
+          ['Tripulación', 'TRIPULACIÓN', `<p>Naves de la Tierra aterrizan en la plataforma y traen nuevos astronautas.</p>
+            <ul>${li('psychology', '#c354ff', 'Más astronautas hacen <b>más Ciencia</b>, pero también comen, beben y respiran más.')}
+            ${li('error', '#ff4d4d', '¡Si la base está llena, la nave aterriza igual! Los astronautas <b>sin lugar</b> pierden Vida cada segundo y la Ciencia baja. El contador de tripulación parpadea en rojo.')}
+            ${li('home', '#34d399', 'Construye <b>Módulos Habitacionales</b> antes de que la base se llene.')}</ul>`],
+          ['Nivel de base', 'BASE: CENTRO DE MANDO', `<p>La pestaña <b>Base</b> hace crecer tu base: Puesto Avanzado, Asentamiento, Colonia, Ciudad y Metrópolis.</p>
+            <ul>${li('bolt', '#34d399', 'Cada nivel hace que todos los edificios produzcan un <b>25% más</b> y da más espacio en las barras.')}
+            ${li('domain', '#ffd23f', 'Es muy caro y necesita un número mínimo de edificios.')}
+            ${li('warning', '#ff4d4d', '¡Una base más grande también gasta más suministros!')}</ul>`],
+          ['Eventos', 'EVENTOS', `<p>A veces aparece una <b>ALERTA</b> con sirena: tormentas solares, de polvo, astronautas enfermos y más. ¡Están inspirados en datos reales de clima espacial de la NASA!</p>
+            <ul>${li('check_circle', '#ffd23f', 'El juego espera mientras <b>eliges</b> qué hacer.')}
+            ${li('warning', '#ff4d4d', 'Cada elección cuesta algo. Piensa en lo que tu base puede gastar ahora.')}</ul>`],
+          ['Datos', 'PESTAÑA DATOS', `<p>La pestaña <b>Datos</b> muestra cómo va tu base.</p>
+            <ul>${li('chart-bar', '#7bd0ff', 'Un gráfico de tus recursos en los últimos 3 minutos. Las líneas rojas discontinuas marcan los eventos.')}
+            ${li('bolt', '#34d399', 'Una tabla con lo que se <b>produce</b> y se <b>gasta</b> cada segundo, y la lista de eventos y tus elecciones.')}
+            ${li('group', '#c084fc', 'Tu tripulación y cuánto gasta cada astronauta.')}</ul>`],
+          ['Guardar y teclas', 'GUARDAR, AJUSTES Y TECLAS', `<ul>${li('check_circle', '#34d399', 'El juego <b>se guarda solo</b> cada 5 segundos. La casita vuelve al menú y también guarda. Usa <b>CONTINUAR</b> para seguir jugando.')}
+            ${li('pause', '#cbd5e1', 'El botón de pausa detiene el juego. El juego también se pausa cuando sales de la página.')}
+            ${li('star', '#ffd23f', '<b>AJUSTES</b>: elige el idioma, Explorer (fácil), Astronaut (normal) o Commander (difícil), y enciende o apaga la música y los sonidos.')}
+            ${li('touch_app', '#ffd23f', 'Teclas: <kbd>1</kbd>-<kbd>5</kbd> botones de clic, <kbd>6</kbd> escudo. En el menú: flechas y <kbd>Enter</kbd>.')}</ul>
+            <p class="tut-tip">¡Buena suerte, Comandante! Pulsa NUEVO JUEGO para empezar tu misión.</p>`]
+        ]
+      };
+      // Páginas no idioma atual: [ícone, cor, aba, título, texto]
+      const tutPages = () => TUTORIAL_PAGES.map((p, i) => TUTORIAL_TR[LANG] ? [p[0], p[1], ...TUTORIAL_TR[LANG][i]] : p);
       let tutPage = 0;
-      document.getElementById('tut-tabs').innerHTML = TUTORIAL_PAGES.map(([icon, color, tab], i) =>
-        `<button onclick="tutorialGo(${i}, true)" type="button"><span class="material-symbols-outlined text-[16px]" style="color:${color}">${icon}</span>${tab}</button>`).join('');
       window.tutorialGo = function(n, jump) {
+        const pages = tutPages();
+        document.getElementById('tut-tabs').innerHTML = pages.map(([icon, color, tab], i) =>
+          `<button onclick="tutorialGo(${i}, true)" type="button"><span class="material-symbols-outlined text-[16px]" style="color:${color}">${icon}</span>${tab}</button>`).join('');
         tutPage = Math.max(0, Math.min(TUTORIAL_PAGES.length - 1, jump ? n : tutPage + n));
-        const [icon, color, , title, html] = TUTORIAL_PAGES[tutPage];
+        const [icon, color, , title, html] = pages[tutPage];
         const page = document.getElementById('tut-page');
         page.innerHTML = `<div class="tut-head"><span class="material-symbols-outlined" style="color:${color}">${icon}</span><h3 style="color:${color}">${title}</h3></div>${html}`;
         page.scrollTop = 0;
@@ -1935,15 +2061,315 @@
       let settingsOpen = false;
 
       function saveSettings() {
-        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ difficulty: selectedDifficulty, music: musicOn, sfx: sfxOn })); } catch (e) {}
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ difficulty: selectedDifficulty, music: musicOn, sfx: sfxOn, lang: LANG })); } catch (e) {}
       }
+      let LANG = 'en';
       try {
         const st = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
         if (st) {
           if (['easy', 'normal', 'hard'].includes(st.difficulty)) selectedDifficulty = st.difficulty;
           musicOn = st.music !== false; sfxOn = st.sfx !== false;
+          if (['en', 'pt', 'es'].includes(st.lang)) LANG = st.lang;
         }
       } catch (e) {}
+
+      // -------------------------------------------------------------
+      // IDIOMAS: English / Português / Español
+      // O jogo é escrito em inglês. Cada texto que aparece na tela é procurado no dicionário abaixo
+      // ("#" = número, "@" = nome de prédio/evento/base, traduzido à parte) e trocado na hora,
+      // inclusive os textos novos que o jogo escreve depois (MutationObserver).
+      // -------------------------------------------------------------
+      const I18N_NAMES = [
+        ['Water Recycler', 'Reciclador de Água', 'Reciclador de Agua'], ['Food Greenhouse', 'Estufa de Comida', 'Invernadero de Comida'],
+        ['Foldable Solar Panels', 'Painéis Solares Dobráveis', 'Paneles Solares Plegables'], ['Optimized Shield', 'Escudo Otimizado', 'Escudo Optimizado'],
+        ['Space Antenna', 'Antena Espacial', 'Antena Espacial'], ['Air Filters', 'Filtros de Ar', 'Filtros de Aire'], ['Landing Pad', 'Plataforma de Pouso', 'Plataforma de Aterrizaje'],
+        ['Storage Depot', 'Depósito', 'Depósito'], ['Habitat Module', 'Módulo Habitacional', 'Módulo Habitacional'], ['Ice Drill', 'Perfuratriz de Gelo', 'Taladro de Hielo'],
+        ['Oxygen Generator', 'Gerador de Oxigênio', 'Generador de Oxígeno'], ['Science Lab', 'Laboratório', 'Laboratorio'], ['Power Plant', 'Usina de Energia', 'Planta de Energía'],
+        ['Farm Tunnel', 'Túnel de Plantio', 'Túnel de Cultivo'], ['Ice Pickaxe', 'Picareta de Gelo', 'Pico de Hielo'], ['Harvest Gloves', 'Luvas de Colheita', 'Guantes de Cosecha'],
+        ['Turbo Electrolyzer', 'Eletrolisador Turbo', 'Electrolizador Turbo'], ['Panel Brush', 'Escova de Painel', 'Cepillo de Paneles'], ['Field Notebook', 'Caderno de Campo', 'Cuaderno de Campo'],
+        ['Auto Clicker', 'Clique Automático', 'Clic Automático'],
+        ['Solar Storm!', 'Tempestade Solar!', '¡Tormenta Solar!'], ['Solar Flare!', 'Erupção Solar!', '¡Llamarada Solar!'], ['Strong Signal from Earth!', 'Sinal Forte da Terra!', '¡Señal Fuerte de la Tierra!'],
+        ['Dust Cloud!', 'Nuvem de Poeira!', '¡Nube de Polvo!'], ['Meteor Shower!', 'Chuva de Meteoros!', '¡Lluvia de Meteoros!'], ['Freezing Night!', 'Noite Congelante!', '¡Noche Helada!'],
+        ['Astronaut Has a Cold!', 'Astronauta Resfriado!', '¡Astronauta Resfriado!'], ['Ice Found!', 'Gelo Encontrado!', '¡Hielo Encontrado!'], ['Super Harvest!', 'Super Colheita!', '¡Súper Cosecha!'],
+        ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
+      ];
+      const I18N = [
+        // Abertura e menu
+        ['CLICK TO START', 'CLIQUE PARA COMEÇAR', 'HAZ CLIC PARA EMPEZAR'], ['TAP TO START', 'TOQUE PARA COMEÇAR', 'TOCA PARA EMPEZAR'],
+        ['PARTICIPANT PROJECT', 'PROJETO PARTICIPANTE', 'PROYECTO PARTICIPANTE'], ['A game developed by a team', 'Um jogo desenvolvido por uma equipe', 'Un juego desarrollado por un equipo'],
+        ['of non-programmers', 'de não programadores', 'de no programadores'], ['Click or press any key to skip', 'Clique ou aperte qualquer tecla para pular', 'Haz clic o pulsa una tecla para saltar'],
+        ['HIGH RADIATION', 'RADIAÇÃO ALTA', 'RADIACIÓN ALTA'], ['MUSIC: ENGAGED', 'MÚSICA: LIGADA', 'MÚSICA: ACTIVADA'], ['MUSIC: MUTED', 'MÚSICA: DESLIGADA', 'MÚSICA: APAGADA'],
+        ['CONTINUE', 'CONTINUAR', 'CONTINUAR'], ['NEW GAME', 'NOVO JOGO', 'NUEVO JUEGO'], ['SETTINGS', 'CONFIGURAÇÕES', 'AJUSTES'], ['EXIT', 'SAIR', 'SALIR'],
+        ['LANGUAGE:', 'IDIOMA:', 'IDIOMA:'], ['DIFFICULTY:', 'DIFICULDADE:', 'DIFICULTAD:'], ['Easy', 'Fácil', 'Fácil'], ['Hard', 'Difícil', 'Difícil'],
+        ['the crew uses less and dangers hurt less.', 'a tripulação gasta menos e os perigos machucam menos.', 'la tripulación gasta menos y los peligros hacen menos daño.'],
+        ['the real challenge.', 'o desafio de verdade.', 'el desafío de verdad.'], ['everything is #% harder!', 'tudo fica #% mais difícil!', '¡todo es un #% más difícil!'],
+        ['SOUND:', 'SOM:', 'SONIDO:'], ['Music: ON', 'Música: LIGADA', 'Música: SÍ'], ['Music: OFF', 'Música: DESLIGADA', 'Música: NO'],
+        ['Sound effects: ON', 'Efeitos sonoros: LIGADOS', 'Efectos de sonido: SÍ'], ['Sound effects: OFF', 'Efeitos sonoros: DESLIGADOS', 'Efectos de sonido: NO'],
+        ['SAVED GAME:', 'JOGO SALVO:', 'PARTIDA GUARDADA:'], ['No saved game.', 'Nenhum jogo salvo.', 'No hay partida guardada.'],
+        ['Saved mission: # min # s survived, # astronauts.', 'Missão salva: # min # s sobrevividos, # astronautas.', 'Misión guardada: # min # s sobrevividos, # astronautas.'],
+        ['Delete saved game', 'Apagar jogo salvo', 'Borrar partida guardada'], ['SAVE & RETURN', 'SALVAR E VOLTAR', 'GUARDAR Y VOLVER'],
+        ['◄ BACK', '◄ VOLTAR', '◄ ATRÁS'], ['NEXT ►', 'PRÓXIMO ►', 'SIGUIENTE ►'], ['DONE ✔', 'PRONTO ✔', 'LISTO ✔'],
+        ['SEE YOU SOON, ASTRONAUT!', 'ATÉ LOGO, ASTRONAUTA!', '¡HASTA PRONTO, ASTRONAUTA!'],
+        ['To exit the game, close this browser tab. Want to keep playing? Click the button below!', 'Para sair do jogo, feche esta aba do navegador. Quer continuar jogando? Clique no botão abaixo!', 'Para salir del juego, cierra esta pestaña del navegador. ¿Quieres seguir jugando? ¡Haz clic en el botón de abajo!'],
+        ['► RETURN TO MENU', '► VOLTAR AO MENU', '► VOLVER AL MENÚ'], ['PAUSED', 'PAUSADO', 'PAUSA'], ['Click anywhere to continue', 'Clique em qualquer lugar para continuar', 'Haz clic en cualquier lugar para continuar'],
+        // HUD e botões
+        ['Health', 'Vida', 'Vida'], ['@ • LEVEL #', '@ • NÍVEL #', '@ • NIVEL #'], ['WARNING', 'ALERTA', 'ALERTA'],
+        ['All systems go! Click the colored buttons below to collect resources.', 'Tudo pronto! Clique nos botões coloridos abaixo para coletar recursos.', '¡Todo listo! Haz clic en los botones de colores para recoger recursos.'],
+        ['Water', 'Água', 'Agua'], ['Food', 'Comida', 'Comida'], ['Oxygen', 'Oxigênio', 'Oxígeno'], ['Energy', 'Energia', 'Energía'], ['Radiation', 'Radiação', 'Radiación'], ['Science', 'Ciência', 'Ciencia'],
+        ['/ # max', '/ # máx', '/ # máx'], ['for upgrades', 'para melhorias', 'para mejoras'], ['Build', 'Construir', 'Construir'], ['Tree', 'Árvore', 'Árbol'], ['Data', 'Dados', 'Datos'],
+        ['SHIELD', 'ESCUDO', 'ESCUDO'], ['-# Radiation/s', '-# Radiação/s', '-# Radiación/s'], ['Costs # Energy/s', 'Custa # Energia/s', 'Cuesta # Energía/s'], ['Minimize', 'Minimizar', 'Minimizar'],
+        ['+Water', '+Água', '+Agua'], ['+Food', '+Comida', '+Comida'], ['+Oxygen', '+Oxigênio', '+Oxígeno'], ['+Energy', '+Energia', '+Energía'], ['+Science', '+Ciência', '+Ciencia'],
+        ['Melt Ice', 'Derreter Gelo', 'Derretir Hielo'], ['Harvest Plants', 'Colher Plantas', 'Cosechar Plantas'], ['Generate Oxygen', 'Gerar Oxigênio', 'Generar Oxígeno'],
+        ['Solar Panel', 'Painel Solar', 'Panel Solar'], ['Research', 'Pesquisar', 'Investigar'],
+        ['Costs # Energy', 'Custa # Energia', 'Cuesta # Energía'], ['Costs # Water and # Energy', 'Custa # Água e # Energia', 'Cuesta # Agua y # Energía'], ['Costs # Science', 'Custa # Ciência', 'Cuesta # Ciencia'],
+        ['+# Water', '+# Água', '+# Agua'], ['+# Food', '+# Comida', '+# Comida'], ['+# Oxygen', '+# Oxigênio', '+# Oxígeno'], ['+# Energy', '+# Energia', '+# Energía'], ['+# Science', '+# Ciência', '+# Ciencia'],
+        ['-# Water', '-# Água', '-# Agua'], ['-# Food', '-# Comida', '-# Comida'], ['-# Oxygen', '-# Oxigênio', '-# Oxígeno'], ['-# Energy', '-# Energia', '-# Energía'], ['-# Science', '-# Ciência', '-# Ciencia'],
+        ['+# Water!', '+# Água!', '¡+# Agua!'], ['+# Food!', '+# Comida!', '¡+# Comida!'], ['+# Oxygen!', '+# Oxigênio!', '¡+# Oxígeno!'], ['+# Energy!', '+# Energia!', '¡+# Energía!'],
+        ['+# Water/s', '+# Água/s', '+# Agua/s'], ['+# Food/s', '+# Comida/s', '+# Comida/s'], ['+# Oxygen/s', '+# Oxigênio/s', '+# Oxígeno/s'], ['+# Energy/s', '+# Energia/s', '+# Energía/s'], ['+# Science/s', '+# Ciência/s', '+# Ciencia/s'],
+        // Base (Command Center)
+        ['Command Center', 'Centro de Comando', 'Centro de Mando'], ['Level # • @', 'Nível # • @', 'Nivel # • @'],
+        ['Now: buildings make +#%, the crew uses +#%', 'Agora: os prédios produzem +#%, a tripulação gasta +#%', 'Ahora: los edificios producen +#%, la tripulación gasta +#%'],
+        ['Next: buildings make +#% and +# space in every bar', 'Próximo: os prédios produzem +#% e +# de espaço em cada barra', 'Siguiente: los edificios producen +#% y +# de espacio en cada barra'],
+        ['But the crew uses +#% (a bigger base needs more!)', 'Mas a tripulação gasta +#% (uma base maior precisa de mais!)', 'Pero la tripulación gasta +#% (¡una base más grande necesita más!)'],
+        ['To upgrade, your base needs:', 'Para melhorar, sua base precisa de:', 'Para mejorar, tu base necesita:'], ['Cost: # Science', 'Custo: # Ciência', 'Costo: # Ciencia'],
+        ['Upgrade Base', 'Melhorar Base', 'Mejorar Base'], ['MAXIMUM', 'MÁXIMO', 'MÁXIMO'], ['Maximum level!', 'Nível máximo!', '¡Nivel máximo!'], ['Complete', 'Completo', 'Completo'],
+        // Build
+        ['New buildings for your base', 'Novos prédios para sua base', 'Nuevos edificios para tu base'], ['Available:', 'Disponível:', 'Disponible:'], ['# Science', '# Ciência', '# Ciencia'],
+        ['Click', 'Clique', 'Clic'], ['CLICK', 'CLIQUE', 'CLIC'], ['Shield', 'Escudo', 'Escudo'], ['Crew & Storage', 'Tripulação e Depósito', 'Tripulación y Depósito'],
+        ['Level #', 'Nível #', 'Nivel #'], ['Built: #', 'Construídos: #', 'Construidos: #'], ['Not built', 'Não construído', 'No construido'], ['Upgrade', 'Melhorar', 'Mejorar'], ['Locked', 'Trancado', 'Bloqueado'],
+        ['Built!', 'Construído!', '¡Construido!'], ['Upgraded!', 'Melhorado!', '¡Mejorado!'], ['Now', 'Agora', 'Ahora'], ['Next', 'Próximo', 'Siguiente'], ['Off', 'Desligado', 'Apagado'],
+        ['A sharper pick: melt more ice in each click!', 'Uma picareta mais afiada: derrete mais gelo a cada clique!', 'Un pico más afilado: ¡derrite más hielo en cada clic!'],
+        ['Pick more food in each harvest!', 'Colha mais comida a cada colheita!', '¡Recoge más comida en cada cosecha!'],
+        ['A faster machine: more Oxygen in each click!', 'Uma máquina mais rápida: mais Oxigênio a cada clique!', 'Una máquina más rápida: ¡más Oxígeno en cada clic!'],
+        ['Brush the Mars dust off the panels: more Energy in each click!', 'Tire a poeira de Marte dos painéis: mais Energia a cada clique!', 'Quita el polvo de Marte de los paneles: ¡más Energía en cada clic!'],
+        ['Write down every discovery: more Science in each experiment!', 'Anote cada descoberta: mais Ciência a cada experimento!', 'Apunta cada descubrimiento: ¡más Ciencia en cada experimento!'],
+        ['A little robot helper clicks for you, always on what the base needs most!', 'Um robozinho ajudante clica por você, sempre no que a base mais precisa!', '¡Un robotito ayudante hace clic por ti, siempre en lo que la base más necesita!'],
+        ['+# Water per click', '+# Água por clique', '+# Agua por clic'], ['+# Food per click', '+# Comida por clique', '+# Comida por clic'], ['+# Oxygen per click', '+# Oxigênio por clique', '+# Oxígeno por clic'],
+        ['+# Energy per click', '+# Energia por clique', '+# Energía por clic'], ['+# Science per click', '+# Ciência por clique', '+# Ciencia por clic'],
+        ['# auto clicks/s, crew uses +#% supplies', '# cliques automáticos/s, a tripulação gasta +#% de suprimentos', '# clics automáticos/s, la tripulación gasta +#% de suministros'],
+        ['Lv # opens in the Tree:', 'Nv # abre na Árvore:', 'Nv # abre en el Árbol:'], ['Tree path open!', 'Caminho da árvore aberto!', '¡Camino del árbol abierto!'], ['Lv #', 'Nv #', 'Nv #'],
+        ['Automatically collects Water:', 'Coleta Água automaticamente:', 'Recoge Agua automáticamente:'], ['every second, at no energy cost!', 'a cada segundo, sem gastar energia!', '¡cada segundo, sin gastar energía!'],
+        ['NASA fact:', 'Fato da NASA:', 'Dato de la NASA:'], ['Based on NASA research →', 'Baseado em pesquisa da NASA →', 'Basado en investigación de la NASA →'],
+        ['In #, NASA’s Phoenix lander found water ice just under the Martian soil.', 'Em #, a sonda Phoenix da NASA encontrou gelo de água logo abaixo do solo de Marte.', 'En #, la sonda Phoenix de la NASA encontró hielo de agua justo bajo el suelo de Marte.'],
+        ['Unlock it in the', 'Desbloqueie na', 'Desbloquéalo en el'], ['Skill Tree', 'Árvore de Habilidades', 'Árbol de Habilidades'],
+        ['Automatically generates Oxygen:', 'Gera Oxigênio automaticamente:', 'Genera Oxígeno automáticamente:'], ['every second for the crew!', 'a cada segundo para a tripulação!', '¡cada segundo para la tripulación!'],
+        ['In #, MOXIE on the Perseverance rover made oxygen from the air of Mars!', 'Em #, o MOXIE do rover Perseverance fez oxigênio com o ar de Marte!', '¡En #, MOXIE en el rover Perseverance hizo oxígeno con el aire de Marte!'],
+        ['Scientists do experiments:', 'Cientistas fazem experimentos:', 'Los científicos hacen experimentos:'], ['every second!', 'a cada segundo!', '¡cada segundo!'],
+        ['More than #,# science experiments have been done on the ISS.', 'Mais de #.# experimentos científicos já foram feitos na ISS.', 'Se han hecho más de #.# experimentos científicos en la ISS.'],
+        ['Makes power:', 'Produz energia:', 'Produce energía:'], ['every second, even during dust storms!', 'a cada segundo, até em tempestades de poeira!', '¡cada segundo, incluso en tormentas de polvo!'],
+        ['NASA tested Kilopower, a small nuclear reactor to power bases on the Moon and Mars.', 'A NASA testou o Kilopower, um pequeno reator nuclear para dar energia a bases na Lua e em Marte.', 'La NASA probó Kilopower, un pequeño reactor nuclear para dar energía a bases en la Luna y Marte.'],
+        ['Grows plants all day:', 'Cultiva plantas o dia todo:', 'Cultiva plantas todo el día:'],
+        ['Plants make food, clean water and make oxygen, all at the same time!', 'As plantas fazem comida, limpam a água e fazem oxigênio, tudo ao mesmo tempo!', '¡Las plantas hacen comida, limpian el agua y hacen oxígeno, todo al mismo tiempo!'],
+        ['Each one: +# astronaut capacity and +# of each resource!', 'Cada um: +# vagas para astronautas e +# de cada recurso!', 'Cada uno: ¡+# plazas para astronautas y +# de cada recurso!'],
+        ['+# crew space', '+# vagas na tripulação', '+# plazas de tripulación'],
+        ['In NASA’s CHAPEA mission, volunteers lived a year in a #D-printed Mars habitat on Earth.', 'Na missão CHAPEA da NASA, voluntários viveram um ano num habitat de Marte impresso em #D, aqui na Terra.', 'En la misión CHAPEA de la NASA, voluntarios vivieron un año en un hábitat de Marte impreso en #D, en la Tierra.'],
+        ['Each level:', 'Cada nível:', 'Cada nivel:'], ['+# space', '+# de espaço', '+# de espacio'], ['for Water, Food, Oxygen and Energy!', 'para Água, Comida, Oxigênio e Energia!', '¡para Agua, Comida, Oxígeno y Energía!'],
+        ['+# space in every bar', '+# de espaço em cada barra', '+# de espacio en cada barra'],
+        ['Cargo ships fly to the ISS every few months, and the crew packs the supplies into storage racks and bags.', 'Naves de carga vão até a ISS a cada poucos meses, e a tripulação guarda os suprimentos em prateleiras e sacolas.', 'Naves de carga viajan a la ISS cada pocos meses, y la tripulación guarda los suministros en estantes y bolsas.'],
+        ['Ships from Earth arrive', 'Naves da Terra chegam', 'Las naves de la Tierra llegan'], ['# seconds sooner', '# segundos mais cedo', '# segundos antes'],
+        ['. More crew = more Science, but more Food too!', '. Mais tripulação = mais Ciência, mas também mais Comida!', '. Más tripulación = más Ciencia, ¡pero también más Comida!'],
+        ['A ship with crew every #s', 'Uma nave com tripulação a cada #s', 'Una nave con tripulación cada #s'],
+        ['In #, the Perseverance rover landed on Mars with a rocket-powered sky crane.', 'Em #, o rover Perseverance pousou em Marte com um guindaste aéreo movido a foguetes.', 'En #, el rover Perseverance aterrizó en Marte con una grúa aérea propulsada por cohetes.'],
+        ['Cleans and reuses water, so each astronaut drinks less!', 'Limpa e reutiliza a água, então cada astronauta bebe menos!', '¡Limpia y reutiliza el agua, así cada astronauta bebe menos!'],
+        ['Each astronaut drinks # Water/s', 'Cada astronauta bebe # Água/s', 'Cada astronauta bebe # Agua/s'],
+        ['On the ISS, about #% of the water is recycled, even sweat and urine!', 'Na ISS, cerca de #% da água é reciclada, até suor e xixi!', '¡En la ISS, cerca del #% del agua se recicla, incluso el sudor y la orina!'],
+        ['Grows food on its own: +# Food every second!', 'Cultiva comida sozinha: +# Comida a cada segundo!', 'Cultiva comida sola: ¡+# Comida cada segundo!'],
+        ['In #, astronauts on the ISS ate red lettuce grown in the Veggie garden.', 'Em #, astronautas na ISS comeram alface roxa plantada na horta Veggie.', 'En #, los astronautas de la ISS comieron lechuga roja cultivada en el huerto Veggie.'],
+        ['Generates +# Energy every second from the Sun!', 'Gera +# Energia a cada segundo com o Sol!', '¡Genera +# Energía cada segundo con el Sol!'],
+        ['Mars dust covers solar panels, so NASA studies how to keep them clean and working.', 'A poeira de Marte cobre os painéis solares, então a NASA estuda como mantê-los limpos e funcionando.', 'El polvo de Marte cubre los paneles solares, por eso la NASA estudia cómo mantenerlos limpios y funcionando.'],
+        ['The shield consumes less energy while protecting the base.', 'O escudo gasta menos energia enquanto protege a base.', 'El escudo gasta menos energía mientras protege la base.'],
+        ['Shield uses # Energy/s', 'O escudo gasta # Energia/s', 'El escudo gasta # Energía/s'],
+        ['Mars has no magnetic shield like Earth. Bases may use Martian soil to block radiation.', 'Marte não tem um escudo magnético como a Terra. As bases podem usar o solo marciano para bloquear a radiação.', 'Marte no tiene un escudo magnético como la Tierra. Las bases pueden usar suelo marciano para bloquear la radiación.'],
+        ['Cleans the air, so the crew breathes less Oxygen!', 'Limpa o ar, então a tripulação respira menos Oxigênio!', '¡Limpia el aire, así la tripulación respira menos Oxígeno!'],
+        ['Each astronaut breathes # Oxygen/s', 'Cada astronauta respira # Oxigênio/s', 'Cada astronauta respira # Oxígeno/s'],
+        ['The ISS makes oxygen by splitting water with electricity (electrolysis).', 'A ISS faz oxigênio separando a água com eletricidade (eletrólise).', 'La ISS hace oxígeno separando el agua con electricidad (electrólisis).'],
+        ['Communicates with Earth:', 'Fala com a Terra:', 'Se comunica con la Tierra:'],
+        ['The ISS talks to Earth through NASA’s TDRS relay satellites.', 'A ISS fala com a Terra pelos satélites TDRS da NASA.', 'La ISS habla con la Tierra mediante los satélites TDRS de la NASA.'],
+        // Árvore
+        ['Start with your clicks, then spend Science to unlock new buildings. Each node needs the one above it.', 'Comece pelos cliques e depois gaste Ciência para desbloquear novos prédios. Cada nó precisa do nó de cima.', 'Empieza por los clics y luego gasta Ciencia para desbloquear nuevos edificios. Cada nodo necesita el de arriba.'],
+        ['Upgrade your clicks in Build', 'Melhore seus cliques em Construir', 'Mejora tus clics en Construir'],
+        ['✘ @ Lv #', '✘ @ Nv #', '✘ @ Nv #'], ['✔ @ Lv #', '✔ @ Nv #', '✔ @ Nv #'], ['✘ Base Lv #', '✘ Base Nv #', '✘ Base Nv #'], ['✔ Base Lv #', '✔ Base Nv #', '✔ Base Nv #'],
+        ['✔ Unlocked', '✔ Desbloqueado', '✔ Desbloqueado'],
+        // Dados
+        ['Mission Stage:', 'Fase da Missão:', 'Etapa de la Misión:'], ['Phase # (Beginning)', 'Fase # (Começo)', 'Fase # (Inicio)'],
+        ['Phase # (Moderate Activity)', 'Fase # (Atividade Moderada)', 'Fase # (Actividad Moderada)'], ['Phase # (Intense Storms)', 'Fase # (Tempestades Intensas)', 'Fase # (Tormentas Intensas)'],
+        ['Real NASA Sources', 'Fontes Reais da NASA', 'Fuentes Reales de la NASA'], ['Your resources • last # minutes', 'Seus recursos • últimos # minutos', 'Tus recursos • últimos # minutos'],
+        ['▲ Red dashed line', '▲ Linha vermelha tracejada', '▲ Línea roja discontinua'],
+        ['= an event happened. Move the mouse over the chart to see the values.', '= aconteceu um evento. Passe o mouse no gráfico para ver os valores.', '= ocurrió un evento. Pasa el ratón por el gráfico para ver los valores.'],
+        ['Made and used every second', 'Feito e gasto a cada segundo', 'Producido y gastado cada segundo'],
+        ['Automatic only (buildings, crew and events). Your clicks add more!', 'Só o automático (prédios, tripulação e eventos). Seus cliques somam mais!', 'Solo lo automático (edificios, tripulación y eventos). ¡Tus clics suman más!'],
+        ['Events and your choices', 'Eventos e suas escolhas', 'Eventos y tus elecciones'], ['Resource', 'Recurso', 'Recurso'], ['Made', 'Feito', 'Producido'], ['Used', 'Gasto', 'Gastado'],
+        ['No events yet.', 'Nenhum evento ainda.', 'Aún no hay eventos.'], ['Choosing…', 'Escolhendo…', 'Eligiendo…'], ['now', 'agora', 'ahora'],
+        ['Astronaut Crew', 'Tripulação', 'Tripulación'], ['# / # Astronauts', '# / # Astronautas', '# / # Astronautas'], ['Warning:', 'Atenção:', 'Atención:'], ['Warning', 'Atenção', 'Atención'],
+        ['each astronaut generates', 'cada astronauta gera', 'cada astronauta genera'], ['every second, but consumes', 'a cada segundo, mas consome', 'cada segundo, pero consume'],
+        ['Water, Food and Oxygen', 'Água, Comida e Oxigênio', 'Agua, Comida y Oxígeno'], ['every second.', 'a cada segundo.', 'cada segundo.'],
+        ['Tip: Stock up on supplies before recruiting more astronauts.', 'Dica: junte suprimentos antes de chegarem mais astronautas.', 'Consejo: junta suministros antes de que lleguen más astronautas.'],
+        ['Water Usage', 'Gasto de Água', 'Gasto de Agua'], ['Food Usage', 'Gasto de Comida', 'Gasto de Comida'], ['Oxygen Usage', 'Gasto de Oxigênio', 'Gasto de Oxígeno'],
+        ['New astronauts arrive from Earth every few seconds. More people eat more Food!', 'Novos astronautas chegam da Terra a cada poucos segundos. Mais gente come mais Comida!', 'Nuevos astronautas llegan de la Tierra cada pocos segundos. ¡Más gente come más Comida!'],
+        ['NASA Scientific Data', 'Dados Científicos da NASA', 'Datos Científicos de la NASA'], ['Data source:', 'Fonte dos dados:', 'Fuente de datos:'], ['NASA DONKI live', 'NASA DONKI ao vivo', 'NASA DONKI en vivo'],
+        ['Live event records from NASA’s Space Weather Database of Notifications, Knowledge, Information (DONKI).', 'Registros ao vivo do banco de dados de clima espacial da NASA (DONKI).', 'Registros en vivo de la base de datos de clima espacial de la NASA (DONKI).'],
+        ['NASA DONKI • Last # days', 'NASA DONKI • Últimos # dias', 'NASA DONKI • Últimos # días'], ['↻ Refresh', '↻ Atualizar', '↻ Actualizar'],
+        ['Solar flares', 'Erupções solares', 'Llamaradas solares'], ['Geomagnetic storms', 'Tempestades geomagnéticas', 'Tormentas geomagnéticas'], ['Recent events', 'Eventos recentes', 'Eventos recientes'],
+        ['Updated #:#:# AM', 'Atualizado #:#:# AM', 'Actualizado #:#:# AM'], ['Updated #:#:# PM', 'Atualizado #:#:# PM', 'Actualizado #:#:# PM'],
+        ['View NASA record', 'Ver registro da NASA', 'Ver registro de la NASA'], ['Radiation (game simulation):', 'Radiação (simulação do jogo):', 'Radiación (simulación del juego):'],
+        ['# game units/s', '# unidades do jogo/s', '# unidades del juego/s'],
+        ['DONKI reports solar and geomagnetic events. Solar-wind speed and Kp index are not supplied by these event feeds, so they are not fabricated here.', 'O DONKI informa eventos solares e geomagnéticos. A velocidade do vento solar e o índice Kp não vêm nesses dados, então não são inventados aqui.', 'DONKI informa eventos solares y geomagnéticos. La velocidad del viento solar y el índice Kp no vienen en estos datos, así que no se inventan aquí.'],
+        ['ISS Daily Reports • Archive', 'Relatórios Diários da ISS • Arquivo', 'Informes Diarios de la ISS • Archivo'],
+        ['Real reports from NASA’s ISS blog feed. NASA stopped publishing daily summaries in July #, so these are the last ones.', 'Relatórios reais do blog da ISS da NASA. A NASA parou de publicar resumos diários em julho de #, então estes são os últimos.', 'Informes reales del blog de la ISS de la NASA. La NASA dejó de publicar resúmenes diarios en julio de #, así que estos son los últimos.'],
+        ['Life Support Research • NASA NTRS', 'Pesquisa de Suporte à Vida • NASA NTRS', 'Investigación de Soporte Vital • NASA NTRS'], ['Read on NASA NTRS', 'Ler no NASA NTRS', 'Leer en NASA NTRS'],
+        ['Real NASA technical reports behind each building of your base.', 'Relatórios técnicos reais da NASA por trás de cada prédio da sua base.', 'Informes técnicos reales de la NASA detrás de cada edificio de tu base.'],
+        ['Did You Know? (NASA)', 'Você Sabia? (NASA)', '¿Sabías que...? (NASA)'],
+        ['In space, each astronaut needs almost # kilogram of pure oxygen and # liters of water per day! Since the Moon and Mars do not have Earth’s magnetic shield, we need to activate our shields when the Sun releases storms!', 'No espaço, cada astronauta precisa de quase # quilo de oxigênio puro e # litros de água por dia! Como a Lua e Marte não têm o escudo magnético da Terra, precisamos ligar nossos escudos quando o Sol solta tempestades!', '¡En el espacio, cada astronauta necesita casi # kilo de oxígeno puro y # litros de agua al día! Como la Luna y Marte no tienen el escudo magnético de la Tierra, ¡debemos activar nuestros escudos cuando el Sol lanza tormentas!'],
+        ['See official NASA sources →', 'Ver fontes oficiais da NASA →', 'Ver fuentes oficiales de la NASA →'],
+        ['Could not load NASA station reports.', 'Não foi possível carregar os relatórios da estação.', 'No se pudieron cargar los informes de la estación.'], ['Loading…', 'Carregando…', 'Cargando…'],
+        ['Fetching recent solar-weather events from NASA…', 'Buscando eventos recentes de clima solar na NASA…', 'Buscando eventos recientes de clima solar en la NASA…'],
+        ['Could not load NASA DONKI data. Please try again later.', 'Não foi possível carregar os dados do NASA DONKI. Tente de novo mais tarde.', 'No se pudieron cargar los datos de NASA DONKI. Inténtalo más tarde.'],
+        ['Update failed', 'Falha ao atualizar', 'Error al actualizar'],
+        // Fim de jogo e fontes
+        ['Orbital Mission Over!', 'Missão Orbital Encerrada!', '¡Misión Orbital Terminada!'], ['You survived for:', 'Você sobreviveu por:', 'Sobreviviste:'],
+        ['What happened at the base:', 'O que aconteceu na base:', 'Qué pasó en la base:'], ['Largest Crew', 'Maior Tripulação', 'Mayor Tripulación'], ['# astronauts', '# astronautas', '# astronautas'],
+        ['Total Science', 'Ciência Total', 'Ciencia Total'], ['Your Clicks', 'Seus Cliques', 'Tus Clics'], ['# actions', '# ações', '# acciones'], ['Play Again', 'Jogar de Novo', 'Jugar de Nuevo'], ['Menu', 'Menu', 'Menú'],
+        ['The crew ran out of oxygen to breathe!', 'A tripulação ficou sem oxigênio para respirar!', '¡La tripulación se quedó sin oxígeno para respirar!'],
+        ['Tip for next time', 'Dica para a próxima vez', 'Consejo para la próxima vez'],
+        ['The mission ended because %s at the base!', 'A missão acabou porque %s na base!', '¡La misión terminó porque %s en la base!'], ['and', 'e', 'y'],
+        ['ran out of Water', 'acabou a Água', 'se acabó el Agua'], ['ran out of Food', 'acabou a Comida', 'se acabó la Comida'], ['ran out of Oxygen', 'acabou o Oxigênio', 'se acabó el Oxígeno'],
+        ['Radiation became too high', 'a Radiação ficou alta demais', 'la Radiación subió demasiado'],
+        ['# astronaut has no room (build a @)', '# astronauta está sem lugar (construa um @)', '# astronauta no tiene lugar (construye un @)'],
+        ['# astronauts have no room (build a @)', '# astronautas estão sem lugar (construa um @)', '# astronautas no tienen lugar (construye un @)'],
+        ['Act quickly to replenish supplies!', 'Aja rápido para repor os suprimentos!', '¡Actúa rápido para reponer suministros!'],
+        ['The space base systems ran out of resources!', 'Os sistemas da base espacial ficaram sem recursos!', '¡Los sistemas de la base espacial se quedaron sin recursos!'],
+        ['Click the Water, Food, and Energy buttons whenever their bars get low.', 'Clique nos botões de Água, Comida e Energia sempre que as barras ficarem baixas.', 'Haz clic en los botones de Agua, Comida y Energía cuando sus barras estén bajas.'],
+        ['Click "Melt Ice" to get Water, then "Generate Oxygen" so everyone can breathe!', 'Clique em "Derreter Gelo" para pegar Água e depois em "Gerar Oxigênio" para todos respirarem!', '¡Haz clic en "Derretir Hielo" para tener Agua y luego en "Generar Oxígeno" para que todos respiren!'],
+        ['When the red Radiation bar rises, click "Activate Shield" to clear it!', 'Quando a barra de Radiação subir, ligue o Escudo para limpá-la!', '¡Cuando suba la barra de Radiación, activa el Escudo para limpiarla!'],
+        ['Real NASA Facts', 'Fatos Reais da NASA', 'Datos Reales de la NASA'], ['This game uses real information from', 'Este jogo usa informações reais de', 'Este juego usa información real de'],
+        ['scientists and astronauts:', 'cientistas e astronautas:', 'científicos y astronautas:'], ['Space Weather (NASA DONKI)', 'Clima Espacial (NASA DONKI)', 'Clima Espacial (NASA DONKI)'],
+        ['The Sun sometimes releases bursts of solar wind and radiation called solar storms. Scientists monitor the Sun around the clock to warn astronauts!', 'O Sol às vezes solta rajadas de vento solar e radiação chamadas tempestades solares. Cientistas observam o Sol o tempo todo para avisar os astronautas!', 'El Sol a veces lanza ráfagas de viento solar y radiación llamadas tormentas solares. ¡Los científicos vigilan el Sol todo el tiempo para avisar a los astronautas!'],
+        ['Visit NASA DONKI →', 'Visitar NASA DONKI →', 'Visitar NASA DONKI →'], ['Life Support (NASA NTRS & ISS)', 'Suporte à Vida (NASA NTRS e ISS)', 'Soporte Vital (NASA NTRS e ISS)'],
+        ['Technical reports and ISS daily reports about how astronauts recycle water, make oxygen with electricity (electrolysis) and grow food in space.', 'Relatórios técnicos e diários da ISS sobre como os astronautas reciclam água, fazem oxigênio com eletricidade (eletrólise) e cultivam comida no espaço.', 'Informes técnicos y diarios de la ISS sobre cómo los astronautas reciclan agua, hacen oxígeno con electricidad (electrólisis) y cultivan comida en el espacio.'],
+        ['Visit NASA NTRS →', 'Visitar NASA NTRS →', 'Visitar NASA NTRS →'], ['Return to Base', 'Voltar à Base', 'Volver a la Base'],
+        ['Pause', 'Pausar', 'Pausa'], ['Sound', 'Som', 'Sonido'], ['NASA Data', 'Dados da NASA', 'Datos de la NASA'], ['Main Menu', 'Menu Principal', 'Menú Principal'],
+        ['You can unlock something', 'Dá para desbloquear algo', 'Puedes desbloquear algo'], ['Radiation Shield [#]', 'Escudo de Radiação [#]', 'Escudo de Radiación [#]'], ['You can buy something here', 'Dá para comprar algo aqui', 'Puedes comprar algo aquí'],
+        // Avisos do topo
+        ['Welcome to Mars! Keep Health in the green by taking care of your base.', 'Bem-vindo a Marte! Mantenha a Vida no verde cuidando da sua base.', '¡Bienvenido a Marte! Mantén la Vida en verde cuidando tu base.'],
+        ['Not enough energy! Click the yellow "Solar Panel" button first.', 'Energia insuficiente! Clique primeiro no botão amarelo "Painel Solar".', '¡No hay energía! Haz clic primero en el botón amarillo "Panel Solar".'],
+        ['You melted ice and gained +# liters of Water!', 'Você derreteu gelo e ganhou +# litros de Água!', '¡Derretiste hielo y ganaste +# litros de Agua!'],
+        ['Not enough energy for the greenhouse! Click "Solar Panel".', 'Falta energia para a estufa! Clique em "Painel Solar".', '¡Falta energía para el invernadero! Haz clic en "Panel Solar".'],
+        ['Harvest complete! +# Food stored for the crew.', 'Colheita feita! +# Comida guardada para a tripulação.', '¡Cosecha lista! +# Comida guardada para la tripulación.'],
+        ['You need # Water to generate oxygen! Click "Melt Ice".', 'Você precisa de # Água para gerar oxigênio! Clique em "Derreter Gelo".', '¡Necesitas # Agua para generar oxígeno! Haz clic en "Derretir Hielo".'],
+        ['You need # Energy! Click "Solar Panel".', 'Você precisa de # Energia! Clique em "Painel Solar".', '¡Necesitas # Energía! Haz clic en "Panel Solar".'],
+        ['Fresh oxygen generated! +# Oxygen to breathe.', 'Oxigênio fresquinho! +# Oxigênio para respirar.', '¡Oxígeno fresco! +# Oxígeno para respirar.'],
+        ['Not enough Science! Click "Experiment".', 'Ciência insuficiente! Clique em "Pesquisar".', '¡No hay Ciencia! Haz clic en "Investigar".'],
+        ['Batteries charged! +# solar Energy.', 'Baterias carregadas! +# Energia solar.', '¡Baterías cargadas! +# Energía solar.'],
+        ['The computer is out of power! Click "Solar Panel".', 'O computador está sem energia! Clique em "Painel Solar".', '¡La computadora no tiene energía! Haz clic en "Panel Solar".'],
+        ['Experiment complete! +# Science points.', 'Experimento concluído! +# pontos de Ciência.', '¡Experimento listo! +# puntos de Ciencia.'],
+        ['You need # Energy to activate the shield!', 'Você precisa de # Energia para ligar o escudo!', '¡Necesitas # Energía para activar el escudo!'],
+        ['Shield activated! Reducing radiation (-# Energy/s).', 'Escudo ligado! Diminuindo a radiação (-# Energia/s).', '¡Escudo activado! Bajando la radiación (-# Energía/s).'],
+        ['Shield deactivated to conserve energy.', 'Escudo desligado para economizar energia.', 'Escudo apagado para ahorrar energía.'],
+        ['Complete the requirements of this node first!', 'Complete os requisitos deste nó primeiro!', '¡Completa primero los requisitos de este nodo!'],
+        ['You need # Science to unlock it!', 'Você precisa de # Ciência para desbloquear!', '¡Necesitas # Ciencia para desbloquearlo!'],
+        ['@ can now be built in the Build tab!', '@ já pode ser construído na aba Construir!', '¡@ ya se puede construir en la pestaña Construir!'],
+        ['Unlock @ in the Tree tab first!', 'Desbloqueie @ na aba Árvore primeiro!', '¡Desbloquea @ primero en la pestaña Árbol!'],
+        ['Congratulations! @ has been built!', 'Parabéns! @ foi construído!', '¡Felicidades! ¡@ fue construido!'], ['Congratulations! @ has been upgraded!', 'Parabéns! @ foi melhorado!', '¡Felicidades! ¡@ fue mejorado!'],
+        ['@ \u0002# is now Level #!', '@ \u0002# agora está no Nível #!', '¡@ \u0002# ahora está en Nivel #!'],
+        ['You need # Science points! Click "Research".', 'Você precisa de # pontos de Ciência! Clique em "Pesquisar".', '¡Necesitas # puntos de Ciencia! Haz clic en "Investigar".'],
+        ['The shield has run out of energy! Click "Solar Panel".', 'O escudo ficou sem energia! Clique em "Painel Solar".', '¡El escudo se quedó sin energía! Haz clic en "Panel Solar".'],
+        ['Oxygen is running low! Click "Generate Oxygen".', 'O Oxigênio está acabando! Clique em "Gerar Oxigênio".', '¡Se acaba el Oxígeno! Haz clic en "Generar Oxígeno".'],
+        ['Water is running low! Click "Melt Ice".', 'A Água está acabando! Clique em "Derreter Gelo".', '¡Se acaba el Agua! Haz clic en "Derretir Hielo".'],
+        ['Food is running low in the greenhouse! Click "Harvest Plants".', 'A Comida está acabando! Clique em "Colher Plantas".', '¡Se acaba la Comida! Haz clic en "Cosechar Plantas".'],
+        ['Radiation is rising! Activate the "Radiation Shield".', 'A Radiação está subindo! Ligue o "Escudo de Radiação".', '¡La Radiación sube! Activa el "Escudo de Radiación".'],
+        ['@ has ended! The base is back to normal.', '@ acabou! A base voltou ao normal.', '¡@ terminó! La base volvió a la normalidad.'],
+        ['# astronaut has no bed! They lose Health and Science drops. Build a @!', '# astronauta está sem cama! Ele perde Vida e a Ciência cai. Construa um @!', '¡# astronauta no tiene cama! Pierde Vida y la Ciencia baja. ¡Construye un @!'],
+        ['# astronauts have no bed! They lose Health and Science drops. Build a @!', '# astronautas estão sem cama! Eles perdem Vida e a Ciência cai. Construa um @!', '¡# astronautas no tienen cama! Pierden Vida y la Ciencia baja. ¡Construye un @!'],
+        ['A spacecraft brought # new astronaut! More people eat more: harvest more Food!', 'Uma nave trouxe # novo astronauta! Mais gente come mais: colha mais Comida!', '¡Una nave trajo # nuevo astronauta! Más gente come más: ¡cosecha más Comida!'],
+        ['A spacecraft brought # new astronauts! More people eat more: harvest more Food!', 'Uma nave trouxe # novos astronautas! Mais gente come mais: colha mais Comida!', '¡Una nave trajo # nuevos astronautas! Más gente come más: ¡cosecha más Comida!'],
+        // Eventos
+        ['The Sun has released a burst of radiation! Use the shield to protect the crew.', 'O Sol soltou uma rajada de radiação! Use o escudo para proteger a tripulação.', '¡El Sol lanzó una ráfaga de radiación! Usa el escudo para proteger a la tripulación.'],
+        ['Super Shield (-# Energy, -# Radiation)', 'Super Escudo (-# Energia, -# Radiação)', 'Súper Escudo (-# Energía, -# Radiación)'],
+        ['Shelter the Crew (no Science until it ends)', 'Abrigar a Tripulação (sem Ciência até acabar)', 'Refugiar a la Tripulación (sin Ciencia hasta que termine)'],
+        ['The solar panels are generating less energy for a few seconds.', 'Os painéis solares estão gerando menos energia por alguns segundos.', 'Los paneles solares generan menos energía durante unos segundos.'],
+        ['Adjust Panels (-# Energy)', 'Ajustar Painéis (-# Energia)', 'Ajustar Paneles (-# Energía)'], ['Ask NASA for Help (-# Science)', 'Pedir Ajuda à NASA (-# Ciência)', 'Pedir Ayuda a la NASA (-# Ciencia)'],
+        ['NASA has sent help! Choose extra Science or Water:', 'A NASA mandou ajuda! Escolha Ciência ou Água extra:', '¡La NASA envió ayuda! Elige Ciencia o Agua extra:'],
+        ['Gain +# Science', 'Ganhar +# Ciência', 'Ganar +# Ciencia'], ['Receive +# Water', 'Receber +# Água', 'Recibir +# Agua'],
+        ['Dust has covered the solar panels! Clean the sensors to restore normal operation.', 'A poeira cobriu os painéis solares! Limpe os sensores para voltar ao normal.', '¡El polvo cubrió los paneles solares! Limpia los sensores para volver a la normalidad.'],
+        ['Clean Panels (-# Energy)', 'Limpar Painéis (-# Energia)', 'Limpiar Paneles (-# Energía)'], ['Wash with Water (-# Water)', 'Lavar com Água (-# Água)', 'Lavar con Agua (-# Agua)'],
+        ['Tiny space rocks hit the water tanks! Water is leaking (-# Water/s).', 'Pedrinhas do espaço acertaram os tanques! A Água está vazando (-# Água/s).', '¡Piedritas del espacio golpearon los tanques! El Agua se escapa (-# Agua/s).'],
+        ['Repair Tanks (-# Energy)', 'Consertar Tanques (-# Energia)', 'Reparar Tanques (-# Energía)'], ['Seal with Science Foam (-# Science)', 'Vedar com Espuma Científica (-# Ciência)', 'Sellar con Espuma Científica (-# Ciencia)'],
+        ['It is -#°C outside! The heaters are using extra Energy (-# Energy/s).', 'Está fazendo -#°C lá fora! Os aquecedores gastam Energia extra (-# Energia/s).', '¡Hace -#°C afuera! Los calentadores gastan Energía extra (-# Energía/s).'],
+        ['Insulate Base (-# Science)', 'Isolar a Base (-# Ciência)', 'Aislar la Base (-# Ciencia)'], ['Hot Meals for Everyone (-# Food)', 'Comida Quente para Todos (-# Comida)', 'Comida Caliente para Todos (-# Comida)'],
+        ['Some astronauts are sick and resting. The crew makes half the Science.', 'Alguns astronautas estão doentes e descansando. A tripulação faz metade da Ciência.', 'Algunos astronautas están enfermos y descansando. La tripulación hace la mitad de Ciencia.'],
+        ['Medical Kit (-# Food)', 'Kit Médico (-# Comida)', 'Botiquín (-# Comida)'], ['Rest and Drink Water (-# Water)', 'Descansar e Beber Água (-# Água)', 'Descansar y Beber Agua (-# Agua)'],
+        ['The rover found a big block of ice under the ground! What will you do?', 'O rover achou um grande bloco de gelo debaixo do chão! O que você vai fazer?', '¡El rover encontró un gran bloque de hielo bajo el suelo! ¿Qué harás?'],
+        ['Mine It (+# Water)', 'Minerar (+# Água)', 'Extraerlo (+# Agua)'], ['Study It (+# Science)', 'Estudar (+# Ciência)', 'Estudiarlo (+# Ciencia)'],
+        ['The plants in the greenhouse grew super fast! Pick them before they wilt!', 'As plantas da estufa cresceram super rápido! Colha antes que murchem!', '¡Las plantas del invernadero crecieron súper rápido! ¡Cosécalas antes de que se marchiten!'],
+        ['Harvest (+# Food)', 'Colher (+# Comida)', 'Cosechar (+# Comida)'],
+        ['The crew is safe in the shelter! The storm radiation cannot reach them, but they make no Science until it ends.', 'A tripulação está segura no abrigo! A radiação da tempestade não chega até eles, mas eles não fazem Ciência até ela acabar.', '¡La tripulación está a salvo en el refugio! La radiación no los alcanza, pero no hacen Ciencia hasta que termine.'],
+        ['Wait it out (the danger continues)', 'Esperar passar (o perigo continua)', 'Esperar a que pase (el peligro sigue)'],
+        ['Not enough resources! Choose another option or wait it out.', 'Recursos insuficientes! Escolha outra opção ou espere passar.', '¡No hay recursos suficientes! Elige otra opción o espera.'],
+        ['Crew Sheltered!', 'Tripulação Abrigada!', '¡Tripulación Refugiada!'], ['Real NASA event', 'Evento real da NASA', 'Evento real de la NASA'],
+        ['Coronal mass ejection – #/#/#', 'Ejeção de massa coronal – #/#/#', 'Eyección de masa coronal – #/#/#'], ['Solar flare – #/#/#', 'Erupção solar – #/#/#', 'Llamarada solar – #/#/#'],
+        ['Geomagnetic storm – #/#/#', 'Tempestade geomagnética – #/#/#', 'Tormenta geomagnética – #/#/#']
+      ];
+      const I18N_IDX = { pt: 1, es: 2 };
+      const I18N_MAP = { pt: new Map(), es: new Map() };
+      I18N.concat(I18N_NAMES).forEach(r => { I18N_MAP.pt.set(r[0], r[1]); I18N_MAP.es.set(r[0], r[2]); });
+      const NAME_RE = new RegExp('(?<![A-Za-z])(' + I18N_NAMES.map(r => r[0]).sort((a, b) => b.length - a.length)
+        .map(n => n.replace(/[.*+?^${}()|[\]\\!]/g, '\\$&')).join('|') + ')(?![A-Za-z])', 'g');
+
+      // Traduz um texto em inglês para o idioma escolhido (devolve o próprio texto se não houver tradução)
+      function tx(s) {
+        if (LANG === 'en' || !s || !/[A-Za-z]/.test(s)) return s;
+        const m = s.match(/^(\s*)([\s\S]*?)(\s*)$/);
+        const r = txCore(m[2].replace(/\s+/g, ' ').replace(/#/g, '\u0002'));
+        return r === null ? s : m[1] + r.replace(/\u0002/g, '#') + m[3];
+      }
+      function txCore(s) {
+        const D = I18N_MAP[LANG], nums = [];
+        const k1 = s.replace(/\d+(?:\.\d+)?/g, n => (nums.push(n), '#'));
+        const fill = (str, names) => { let i = 0, j = 0; return str.replace(/[#@]/g, c => c === '#' ? (nums[i++] ?? '') : (names[j++] ?? '')); };
+        if (D.has(k1)) return fill(D.get(k1), []);
+        const names = [];
+        const k2 = k1.replace(NAME_RE, n => (names.push(D.get(n) || n), '@'));
+        if (names.length && D.has(k2)) return fill(D.get(k2), names);
+        if (names.length && !/[A-Za-z]/.test(k2)) return fill(k2, names);
+        const ci = s.indexOf(': '); // "Título: texto" -> traduz cada lado
+        if (ci > 0) {
+          const a = txCore(s.slice(0, ci)), b = txCore(s.slice(ci + 2));
+          if (a !== null || b !== null) return (a ?? s.slice(0, ci)) + ': ' + (b ?? s.slice(ci + 2));
+        }
+        return null;
+      }
+      // Aplica na tela: guarda o texto original em inglês de cada nó para poder trocar de idioma depois
+      const I18N_SKIP = 'script,style,.material-symbols-outlined,#tut-page,#tut-tabs';
+      function txNode(n) {
+        const p = n.parentElement;
+        if (!p || p.closest(I18N_SKIP)) return;
+        if (n.__tr !== n.data) n.__src = n.data;
+        const out = tx(n.__src);
+        n.__tr = out;
+        if (n.data !== out) n.data = out;
+      }
+      function txTree(root) {
+        if (root.nodeType === 3) return txNode(root);
+        if (root.nodeType !== 1 || root.closest(I18N_SKIP)) return;
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let n;
+        while ((n = w.nextNode())) txNode(n);
+        [root, ...root.querySelectorAll('[title]')].forEach(el => {
+          if (!el.title) return;
+          if (el.__tt !== el.title) el.__ts = el.title;
+          el.__tt = tx(el.__ts);
+          if (el.title !== el.__tt) el.title = el.__tt;
+        });
+      }
+      new MutationObserver(ms => ms.forEach(m => m.type === 'characterData' ? txNode(m.target) : m.addedNodes.forEach(txTree)))
+        .observe(document.body, { subtree: true, childList: true, characterData: true });
+      function setLanguage(lang) {
+        LANG = lang;
+        document.documentElement.lang = lang;
+        txTree(document.body);
+        if (!document.getElementById('menu-tutorial-panel').classList.contains('hidden')) tutorialGo(tutPage, true);
+        if (typeof drawDataTab === 'function') drawDataTab();
+      }
 
       function loadSave() {
         try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { return null; }
@@ -1968,7 +2394,7 @@
 
       // Marca a opção escolhida em cada grupo e mostra o resumo do jogo salvo
       function renderSettingsUI() {
-        const cur = { difficulty: selectedDifficulty };
+        const cur = { difficulty: selectedDifficulty, lang: LANG };
         document.querySelectorAll('#menu-settings-panel [data-set]').forEach(b => {
           const k = b.dataset.set;
           if (k === 'music' || k === 'sfx') {
@@ -1990,6 +2416,7 @@
         if (key === 'difficulty') { selectedDifficulty = val; S.difficulty = val; }
         if (key === 'music') { musicOn = !musicOn; if (musicOn) { initAudio(); startBackgroundMusic(); } }
         if (key === 'sfx') sfxOn = !sfxOn;
+        if (key === 'lang') setLanguage(val);
         playMenuSfx('select');
         saveSettings();
         renderSettingsUI();
@@ -2253,7 +2680,7 @@
           c.fillStyle = '#9a8f93'; c.textAlign = 'right'; c.textBaseline = 'middle'; c.fillText(Math.round(v), L - 6, y);
         }
         c.textAlign = 'center'; c.textBaseline = 'top';
-        [['-3:00', t0], ['-2:00', now - 120], ['-1:00', now - 60], ['now', now]].forEach(([s, t]) => c.fillText(s, X(t), T + ph + 6));
+        [['-3:00', t0], ['-2:00', now - 120], ['-1:00', now - 60], ['now', now]].forEach(([s, t]) => c.fillText(tx(s), X(t), T + ph + 6));
 
         // Eventos: linha tracejada vermelha com o triângulo de aviso no topo
         S.eventLog.filter(e => e.t >= t0).forEach(e => {
@@ -2278,7 +2705,7 @@
           c.textAlign = 'left'; c.textBaseline = 'middle';
           labels.forEach(l => {
             c.fillStyle = l.s.color; c.fillRect(L + pw + 6, l.y - 1, 8, 3);
-            c.fillStyle = '#e5dfe1'; c.fillText(`${l.s.name} ${Math.round(last[l.s.key])}`, L + pw + 18, l.y);
+            c.fillStyle = '#e5dfe1'; c.fillText(`${tx(l.s.name)} ${Math.round(last[l.s.key])}`, L + pw + 18, l.y);
           });
         }
 
@@ -3205,7 +3632,7 @@
 
         if (healthDamage > 0) {
           S.health = Math.max(0, S.health - healthDamage);
-          setTopAlert('error', 'BASE IN DANGER', `Warning: ${failReasons.join(' and ')}! Act quickly to replenish supplies!`);
+          setTopAlert('error', 'BASE IN DANGER', `${tx('Warning')}: ${failReasons.map(tx).join(` ${tx('and')} `)}! ${tx('Act quickly to replenish supplies!')}`);
         } else {
           // Avisos amarelos preventivos antes de acabar
           if (!S.activeEvent) {
@@ -3228,7 +3655,7 @@
         // CONDIÇÃO DE DERROTA
         if (S.health <= 0) {
           const reasonMsg = failReasons.length > 0
-            ? `The mission ended because ${failReasons.join(' and ')} at the base!`
+            ? tx('The mission ended because %s at the base!').replace('%s', failReasons.map(tx).join(` ${tx('and')} `))
             : 'The space base systems ran out of resources!';
           let tipMsg = 'Click the Water, Food, and Energy buttons whenever their bars get low.';
           if (failReasons.includes('ran out of Oxygen')) {
@@ -4633,6 +5060,7 @@
       renderTopAlertBar();
       renderHUD();
       fetchNasaDonkiTelemetry();
+      setLanguage(LANG); // idioma salvo nas configurações
     })();
   </script>
 </body>
