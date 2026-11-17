@@ -369,6 +369,15 @@
     .tree-img .lock-ico { position:absolute; width:24px; height:30px; right:-14px; bottom:-4px; }
     .tree-cost { margin-top:3px; padding:2px 8px; background:rgba(0,0,0,.35); color:#c354ff; font-weight:700; }
     .tree-cost.poor { color:#fb7185; }
+    /* Auto Clicker: cursor robô que flutua, desliza até o botão e "aperta" */
+    #auto-cursor { position:fixed; z-index:29; width:25px; height:35px; pointer-events:none; background:var(--cursor-img) center/contain no-repeat; image-rendering:pixelated;
+      transition:left .2s ease-out, top .2s ease-out; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.6)); animation:cursor-float 1.6s ease-in-out infinite; }
+    #auto-cursor::after { content:'AUTO'; position:absolute; left:22px; top:-8px; font:8px 'Press Start 2P', monospace; color:#ffd23f; text-shadow:1px 1px 0 #000; }
+    #auto-cursor.tap { animation:cursor-tap .25s ease-out; }
+    @keyframes cursor-float { 50% { transform:translateY(-4px); } }
+    @keyframes cursor-tap { 40% { transform:scale(.75) translate(-4px,-4px); } }
+    .click-card.tap { animation:auto-press .3s ease-out; }
+    @keyframes auto-press { 40% { transform:scale(.96); box-shadow:0 0 0 3px #ffd23f; } }
     .pop-over { color:#ff4d4d !important; animation: pop-blink .8s steps(2) infinite; }
     @keyframes pop-blink { 50% { opacity:.35; } }
     .tree-node.done { background:color-mix(in srgb, var(--res) 18%, #1d1726); }
@@ -1945,7 +1954,7 @@
           autoO2: 0,
           autoSci: 0, autoFood: 0,
           autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
-          clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
+          clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0, autoClick: 0
         },
         tree: {},
 
@@ -2211,7 +2220,9 @@
         text: 'All systems go! Click the colored buttons below to collect resources.'
       };
 
+      let autoClicking = false;
       function setTopAlert(type, badge, text) {
+        if (autoClicking && type === 'success') return; // o auto clique não enche a tela de "SUCCESS"
         currentStatusAlert = { type, badge, text };
         renderTopAlertBar();
       }
@@ -2496,11 +2507,12 @@
         autoEnergy: { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Power Plant' },
         autoFood:   { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Farm Tunnel' },
         // Aba Click: melhoram só o clique (raiz da árvore de habilidades)
-        clickIce:   { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Ice Pickaxe' },
-        clickFood:  { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Harvest Gloves' },
-        clickO2:    { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
-        clickSolar: { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
-        clickSci:   { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Field Notebook' }
+        clickIce:   { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Ice Pickaxe' },
+        clickFood:  { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Harvest Gloves' },
+        clickO2:    { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
+        clickSolar: { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
+        clickSci:   { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Field Notebook' },
+        autoClick:  { baseCost: 100, maxLvl: Infinity, costMult: 1.8,  defaultBtnLabel: 'Upgrade', title: 'Auto Clicker' }
       };
       // Ganho de cada clique: [melhoria, base, +por nível, recurso]
       const CLICK_UP = { ice: ['clickIce', 6, 2, 'Water'], food: ['clickFood', 6, 4, 'Food'], o2: ['clickO2', 8, 3, 'Oxygen'], solar: ['clickSolar', 10, 5, 'Energy'], sci: ['clickSci', 5, 3, 'Science'] };
@@ -2508,11 +2520,11 @@
       // Árvore de habilidades (aba Tree): raiz no clique, um galho por recurso. Cada nó custa Science e pede
       // o nó de cima + nível de clique e/ou nível da base. Destravar o nó libera o prédio no Build.
       const TREE_COLS = [
-        [['autoIce', 15, { click: ['clickIce', 1] }], ['storage', 60, {}], ['recycler', 150, { base: 2 }]],
-        [['autoFood', 15, { click: ['clickFood', 1] }], ['habitat', 30, {}], ['greenhouse', 150, { base: 2 }]],
-        [['autoO2', 15, { click: ['clickO2', 1] }], ['o2tech', 120, { click: ['clickO2', 3] }]],
-        [['autoEnergy', 15, { click: ['clickSolar', 1] }], ['shield', 60, {}], ['solar', 150, { base: 2 }]],
-        [['autoSci', 25, { click: ['clickSci', 1] }], ['antenna', 200, { base: 3 }]]
+        [['autoIce', 80, { click: ['clickIce', 2] }], ['storage', 250, {}], ['recycler', 600, { base: 2 }]],
+        [['autoFood', 80, { click: ['clickFood', 2] }], ['habitat', 120, {}], ['greenhouse', 600, { base: 2 }]],
+        [['autoO2', 100, { click: ['clickO2', 2] }], ['o2tech', 450, { click: ['clickO2', 5] }]],
+        [['autoEnergy', 80, { click: ['clickSolar', 2] }], ['shield', 300, {}], ['solar', 700, { base: 2 }]],
+        [['autoSci', 120, { click: ['clickSci', 2] }], ['antenna', 1200, { base: 3 }]]
       ];
       const TREE = {};
       TREE_COLS.forEach(col => col.forEach(([k, cost, req], i) => { TREE[k] = { cost, ...req, parent: i ? col[i - 1][0] : null }; }));
@@ -2596,9 +2608,11 @@
         clickFood: ['restaurant', '#e0a82e', 'Pick more food in each harvest!'],
         clickO2: ['air', '#34d399', 'A faster machine: more Oxygen in each click!'],
         clickSolar: ['sunny', '#ffd23f', 'Brush the Mars dust off the panels: more Energy in each click!'],
-        clickSci: ['psychology', '#c354ff', 'Write down every discovery: more Science in each experiment!']
+        clickSci: ['psychology', '#c354ff', 'Write down every discovery: more Science in each experiment!'],
+        autoClick: ['smart_toy', '#ffd23f', 'A little robot helper clicks for you, always on what the base needs most!']
       };
       Object.values(CLICK_UP).forEach(([k, base, step, name]) => { UPGRADE_STATS[k] = l => `+${base + l * step} ${name} per click`; });
+      UPGRADE_STATS.autoClick = l => l ? `${(l * 0.5).toFixed(1)} auto clicks per second` : 'Off';
       document.querySelector('[data-screen="upgrades"] .grid').insertAdjacentHTML('afterbegin', Object.entries(CLICK_CARD).map(([k, [icon, color, txt]]) => `
         <div class="res-card res-click bg-surface-low border border-surface-border p-3 rounded-xl flex flex-col justify-between">
           <div class="build-art"><span class="material-symbols-outlined click-art" style="color:${color}">${icon}</span><span class="material-symbols-outlined click-hand">touch_app</span></div>
@@ -2962,7 +2976,7 @@
             autoO2: 0,
             autoSci: 0, autoFood: 0,
             autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
-            clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
+            clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0, autoClick: 0
           },
           tree: {},
 
@@ -3148,6 +3162,41 @@
         renderHUD();
       }
       setInterval(gameTick, 1000);
+
+      // Auto Clicker: um cursor robô vai até o botão que a base mais precisa e clica (0,5 clique/s por nível)
+      const AUTO_BTNS = { ice: ['btn-click-ice', 'actionMineIce'], food: ['btn-click-greenhouse', 'actionHarvestFood'], o2: ['btn-click-o2', 'actionElectrolysis'], solar: ['btn-click-solar', 'actionCollectSolar'], sci: ['btn-click-experiment', 'actionResearchExp'] };
+      const autoCursor = document.createElement('div');
+      autoCursor.id = 'auto-cursor';
+      autoCursor.hidden = true;
+      document.body.append(autoCursor);
+      let autoAcc = 0;
+      function autoPick() {
+        const can = { ice: S.energy >= 5, food: S.energy >= 4, o2: S.water >= 4 && S.energy >= 5, solar: S.science >= 3, sci: S.energy >= 6 };
+        const need = [['o2', S.o2 / S.capO2], ['ice', S.water / S.capWater], ['food', S.food / S.capFood], ['solar', S.energy / S.capEnergy]].sort((a, b) => a[1] - b[1]);
+        if (need[0][1] > 0.6 && can.sci) return 'sci'; // tudo cheio: pesquisa
+        const pick = need.find(([r]) => can[r]);
+        return pick && pick[0];
+      }
+      setInterval(() => {
+        const busy = !S.upgrades.autoClick || S.isGameOver || inMenu || eventAlertOpen || gamePaused || settingsOpen;
+        autoCursor.hidden = busy;
+        if (busy) return;
+        autoAcc = Math.min(2, autoAcc + S.upgrades.autoClick * 0.125);
+        if (autoAcc < 1) return;
+        autoAcc -= 1;
+        const r = autoPick();
+        if (!r) return;
+        const [id, fn] = AUTO_BTNS[r], btn = document.getElementById(id), b = btn.getBoundingClientRect();
+        autoCursor.style.left = `${b.left + b.width * 0.7}px`;
+        autoCursor.style.top = `${b.top + b.height * 0.5}px`;
+        setTimeout(() => {
+          if (S.isGameOver || inMenu) return;
+          [autoCursor, btn].forEach(el => { el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap'); });
+          autoClicking = true;
+          window[fn]({ currentTarget: btn });
+          autoClicking = false;
+        }, 220);
+      }, 250);
 
       // Saiu do jogo (outra aba, app minimizado, tela bloqueada): som para, jogo pausa e salva
       document.addEventListener('visibilitychange', () => {
@@ -3375,7 +3424,7 @@
           }
           // Aba Click: próximo nó da árvore que pede este nível
           const unl = document.getElementById(`unl-${key}`);
-          if (unl) {
+          if (unl && key !== 'autoClick') {
             const next = Object.keys(TREE).find(k => TREE[k].click && TREE[k].click[0] === key && lvl < TREE[k].click[1]);
             unl.innerHTML = next ? `<i class="lock-ico"></i> Lv ${TREE[next].click[1]} opens in the Tree: <b>${UPGRADES_DEF[next].title}</b>` : '<span class="text-emerald-400">Tree path open!</span>';
           }
@@ -4287,6 +4336,12 @@
       const LOCK_COL = { K: '#2a1f3d', S: '#c9d3dd', Y: '#ffcc33', H: '#fff3b0', O: '#c98500' };
       let lockRects = '';
       LOCK_PX.forEach((r, y) => [...r].forEach((c, x) => { if (LOCK_COL[c]) lockRects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${LOCK_COL[c]}"/>`; }));
+      // Cursor do Auto Clicker (setinha dourada com contorno escuro)
+      const CURSOR_PX = ['K.........', 'KK........', 'KWK.......', 'KWWK......', 'KWHWK.....', 'KWHWWK....', 'KWWWWWK...', 'KWWWWWWK..', 'KWWWWWWWK.',
+        'KWWWWKKKKK', 'KWWKWWK...', 'KWK.KWWK..', 'KK...KWWK.', 'K.....KK..'];
+      let curRects = '';
+      CURSOR_PX.forEach((r, y) => [...r].forEach((c, x) => { const col = { K: '#1a1426', W: '#ffd23f', H: '#fff6c2' }[c]; if (col) curRects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${col}"/>`; }));
+      document.documentElement.style.setProperty('--cursor-img', `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 14" shape-rendering="crispEdges">${curRects}</svg>`)}")`);
       document.documentElement.style.setProperty('--lock-img', `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 15" shape-rendering="crispEdges">${lockRects}</svg>`)}")`);
 
       document.querySelectorAll('.material-symbols-outlined').forEach(applyPixelIcon);
