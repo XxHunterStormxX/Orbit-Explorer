@@ -13,7 +13,9 @@
 >
 > For information about changes and improvements made after the event, please refer to `Development Notes/`.
 >
-> **Final version:** the final post-event version of the game is inside the `Development Notes/` folder: [`Development Notes/Orbit_Explorer_Final_Version.html`](Development%20Notes/Orbit_Explorer_Final_Version.html) ([play online](https://xxhunterstormxx.github.io/Orbit-Explorer/Development%20Notes/Orbit_Explorer_Final_Version.html)). The original submission (`index.html`) remains unchanged.
+> **Final version:** the final post-event version of the game is inside the `Development Notes/` folder ([`Orbit_Explorer_Final_Version.html`](Development%20Notes/Orbit_Explorer_Final_Version.html)). The original submission (`index.html`) remains unchanged.
+>
+> <p align="center"><a href="https://xxhunterstormxx.github.io/Orbit-Explorer/Development%20Notes/Orbit_Explorer_Final_Version.html"><img alt="Click here to play the final version" src="https://img.shields.io/badge/%E2%96%B6%20CLICK%20HERE-PLAY%20THE%20FINAL%20VERSION-ff6b00?style=for-the-badge&labelColor=7c3aed"></a></p>
 
 ORbit Explorer is an educational space-colony management game prototype. Players make resource and survival decisions while developing a settlement on Mars. The project combines a playable HTML prototype with a presentation and supporting documentation.
 
