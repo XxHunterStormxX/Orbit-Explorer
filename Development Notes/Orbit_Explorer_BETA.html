@@ -6,7 +6,7 @@
   <title>Orbit Explorer</title>
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
-  <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tiny5&family=Press+Start+2P&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script>
     tailwind.config = {
@@ -37,8 +37,8 @@
             "rad-dark": "#55c904"
           },
           fontFamily: {
-            sans: ["Andika", "sans-serif"],
-            mono: ["Andika", "sans-serif"],
+            sans: ["Tiny5", "sans-serif"],
+            mono: ["Tiny5", "sans-serif"],
             pixel: ["'Press Start 2P'", "monospace"]
           }
         }
@@ -49,7 +49,7 @@
     body {
       background-color: #070918;
       color: #eedfe3;
-      font-family: 'Andika', sans-serif;
+      font-family: 'Tiny5', sans-serif;
       user-select: none;
     }
     /* ===== PADRÃO PIXEL ART GLOBAL (mesmo visual do menu em todo o jogo) ===== */
@@ -97,10 +97,14 @@
       image-rendering: pixelated;
     }
     [hidden] { display: none !important; }
-    .font-mono-code { font-family: 'Andika', sans-serif; }
-    /* Fonte clara (Andika) em todo texto; a fonte pixel fica só no logo */
-    .font-pixel { font-family: 'Andika', sans-serif !important; font-weight: 700; }
+    .font-mono-code { font-family: 'Tiny5', sans-serif; }
+    /* Fonte clara (Tiny5) em todo texto; a fonte pixel fica só no logo */
+    .font-pixel { font-family: 'Tiny5', sans-serif !important; font-weight: 700; }
     h1.font-pixel { font-family: 'Press Start 2P', monospace !important; font-weight: 400; }
+    /* Fonte pixel maior em todo o jogo: aumenta as letras por igual sem mexer no tamanho de cada texto
+       (a Press Start 2P dos títulos e avisos fica como está) */
+    * { font-size-adjust: 0.68; font-synthesis-weight: none; }
+    h1.font-pixel, .warn-label, .rad-alert-text, .intro-start, .intro-big, .intro-small, #auto-cursor::after { font-size-adjust: none; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #0a0d1f; }
     ::-webkit-scrollbar-thumb { background: #3b3236; border-radius: 3px; }
@@ -119,7 +123,7 @@
       position: fixed;
       pointer-events: none;
       font-weight: 700;
-      font-family: 'Andika', sans-serif;
+      font-family: 'Tiny5', sans-serif;
       animation: floatUp 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
       z-index: 60;
       text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
@@ -243,6 +247,7 @@
 
     /* ===== CELULAR (até 640px): tudo compacto para sobrar espaço para ver a base ===== */
     @media (max-width: 640px) {
+      * { font-size-adjust: 0.6; } /* no celular a letra cresce um pouco menos para caber */
       header { padding: 6px 8px !important; }
       header .max-w-7xl { gap: 6px !important; }
       /* Vida na linha inteira; tripulação e controles embaixo */
@@ -253,7 +258,7 @@
       .hud-top button { width: 32px !important; height: 32px !important; }
       /* Recursos: 3 colunas; só o ícone colorido no lugar do nome */
       .hud-res > div { padding: 5px 6px !important; }
-      .hud-res > div > div:first-child > span:first-child { font-size: 0 !important; }
+      .hud-res > div > div:first-child > span:first-child { font-size: 0 !important; font-size-adjust: none; }
       .hud-res > div > div:first-child > span:last-child { font-size: 11px !important; }
       .hud-res .text-base { font-size: 15px !important; }
       .hud-res > div > div:nth-child(2) > span:last-child { font-size: 11px !important; }
@@ -315,8 +320,8 @@
     #colony-panel { position:fixed; inset:0; z-index:1; background:#7b3424; }
     #colony-panel canvas { display:block; width:100%; height:100%; image-rendering:pixelated; }
     #colony-panel .colony-vignette { position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(4,8,18,.22),transparent 28%,transparent 72%,rgba(4,8,18,.3)); }
-    #colony-panel .colony-caption { position:absolute; left:12px; top:10px; z-index:2; padding:6px 9px; border:1px solid rgba(123,208,255,.35); border-radius:9px; background:rgba(7,12,24,.78); backdrop-filter:blur(5px); color:#d9f3ff; font:700 12px 'Andika',sans-serif; letter-spacing:.12em; text-transform:uppercase; }
-    #colony-panel .colony-stage { position:absolute; right:12px; top:10px; z-index:2; padding:6px 9px; border-radius:9px; background:rgba(7,12,24,.78); color:#ffc58a; font:700 12px 'Andika',sans-serif; }
+    #colony-panel .colony-caption { position:absolute; left:12px; top:10px; z-index:2; padding:6px 9px; border:1px solid rgba(123,208,255,.35); border-radius:9px; background:rgba(7,12,24,.78); backdrop-filter:blur(5px); color:#d9f3ff; font:700 12px 'Tiny5',sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+    #colony-panel .colony-stage { position:absolute; right:12px; top:10px; z-index:2; padding:6px 9px; border-radius:9px; background:rgba(7,12,24,.78); color:#ffc58a; font:700 12px 'Tiny5',sans-serif; }
     @media (prefers-reduced-motion: reduce) { #colony-panel * { animation:none !important; } }
 
     /* Abas como janelas: sobem por cima do clicker; clicar fora ou em "minimizar" fecha */
@@ -2134,7 +2139,7 @@
         const X = t => L + (t - t0) / CHART_SPAN * pw, Y = v => T + ph - v / maxY * ph;
 
         // Grade e eixos discretos
-        c.font = `${W < 500 ? 11 : 12}px Andika, sans-serif`; c.lineWidth = 1;
+        c.font = `${W < 500 ? 12 : 13}px Tiny5, sans-serif`; c.lineWidth = 1;
         for (let i = 0; i <= 4; i++) {
           const v = maxY * i / 4, y = Math.round(Y(v)) + .5;
           c.strokeStyle = 'rgba(255,255,255,.08)'; c.beginPath(); c.moveTo(L, y); c.lineTo(L + pw, y); c.stroke();
