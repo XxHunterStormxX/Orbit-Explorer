@@ -1477,13 +1477,13 @@
       let musicPaused = false;      // música pausa durante alertas perigosos
       let eventAlertOpen = false;   // jogo pausa enquanto o alerta de tela cheia está aberto
       let gamePaused = false;       // botão de pause do header
-      let musicStep = 0;
 
       function initAudio() {
         if (!audioCtx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (AudioContext) {
             audioCtx = new AudioContext();
+            setupBuses();
           }
         }
         if (audioCtx && audioCtx.state === 'suspended') {
@@ -1491,29 +1491,38 @@
         }
       }
 
-      // Trilha indie espacial animada (118 BPM): bumbo 4/4, baixo, pad, arpejo com eco
-      const BPM = 118;
-      const STEP = 60 / BPM / 4; // duração de uma semicolcheia
-      const CHORDS = [[57, 60, 64], [53, 57, 60], [52, 55, 60], [55, 59, 62]]; // Am F C G (MIDI)
-      const ARP = [0, 2, 1, 2, 0, 2, 1, 2, 0, 2, 1, 2, 1, 2, 0, 2];
+      // Trilha gerada na hora: cada "música" sorteia acordes, tom, andamento, arpejo, baixo e uma melodia nova,
+      // e passa por seções (intro, groove, verso, refrão, pausa, subida). Nunca toca igual duas vezes.
       const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
-      let nextNoteTime = 0, musicBus = null, echo = null, noiseBuf = null;
+      const rnd = a => a[Math.floor(Math.random() * a.length)];
+      let STEP = 60 / 118 / 4; // duração de uma semicolcheia (muda com o andamento de cada música)
+      let master = null, musicBus = null, sfxBus = null, echo = null, noiseBuf = null, windGain = null, nextNoteTime = 0;
 
-      function setupMusicBus() {
-        musicBus = audioCtx.createGain();
-        musicBus.gain.value = 0.35;
-        musicBus.connect(audioCtx.destination);
-        // Eco (delay com repetição) para o clima espacial
-        echo = audioCtx.createDelay();
-        echo.delayTime.value = STEP * 3;
-        const feedback = audioCtx.createGain(); feedback.gain.value = 0.35;
-        const wet = audioCtx.createGain(); wet.gain.value = 0.3;
-        echo.connect(feedback); feedback.connect(echo);
-        echo.connect(wet); wet.connect(musicBus);
-        // Ruído branco para caixa e chimbal
-        noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
-        const data = noiseBuf.getChannelData(0);
-        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      // Saída: música e efeitos passam por um reverb (sala espacial) para o som não ficar seco
+      function setupBuses() {
+        const ac = audioCtx, sr = ac.sampleRate;
+        master = ac.createGain(); master.gain.value = 0.9; master.connect(ac.destination);
+        const reverb = ac.createConvolver(), ir = ac.createBuffer(2, sr * 2.4, sr);
+        for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3.5); }
+        reverb.buffer = ir;
+        const wet = ac.createGain(); wet.gain.value = 0.5; reverb.connect(wet); wet.connect(master);
+        musicBus = ac.createGain(); musicBus.gain.value = 0.32; musicBus.connect(master);
+        sfxBus = ac.createGain(); sfxBus.connect(master);
+        [[musicBus, 0.35], [sfxBus, 0.3]].forEach(([bus, amt]) => { const s = ac.createGain(); s.gain.value = amt; bus.connect(s); s.connect(reverb); });
+        // Eco (delay com repetição) para o arpejo e a melodia
+        echo = ac.createDelay(1); echo.delayTime.value = STEP * 3;
+        const fb = ac.createGain(); fb.gain.value = 0.35; const ew = ac.createGain(); ew.gain.value = 0.3;
+        echo.connect(fb); fb.connect(echo); echo.connect(ew); ew.connect(musicBus);
+        noiseBuf = ac.createBuffer(1, sr * 2, sr);
+        const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        // Vento de Marte: ruído em loop com filtro que "respira" (fica forte na tempestade de poeira)
+        const wind = ac.createBufferSource(), wf = ac.createBiquadFilter(), lfo = ac.createOscillator(), lfoAmt = ac.createGain();
+        wind.buffer = noiseBuf; wind.loop = true;
+        wf.type = 'bandpass'; wf.frequency.value = 420; wf.Q.value = 0.8;
+        lfo.frequency.value = 0.13; lfoAmt.gain.value = 260; lfo.connect(lfoAmt); lfoAmt.connect(wf.frequency);
+        windGain = ac.createGain(); windGain.gain.value = 0;
+        wind.connect(wf); wf.connect(windGain); windGain.connect(master);
+        wind.start(); lfo.start();
       }
 
       function synthNote(freq, t, dur, type, vol, cutoff, withEcho) {
@@ -1550,181 +1559,221 @@
         gain.gain.setValueAtTime(vol, t);
         gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
         src.connect(filter); filter.connect(gain); gain.connect(musicBus);
-        src.start(t);
+        src.start(t, Math.random() * 0.5);
         src.stop(t + dur);
       }
 
-      function playMusicStep(step, t) {
-        const bar = Math.floor(step / 16) % 4, s = step % 16, chord = CHORDS[bar];
-        if (s % 4 === 0) kick(t);                                    // bumbo nos 4 tempos
-        if (s === 4 || s === 12) noiseHit(t, 0.18, 0.3, 1500);       // caixa no 2 e 4
-        if (s % 4 === 2) noiseHit(t, 0.05, 0.12, 7000);              // chimbal no contratempo
-        if (s % 2 === 0) synthNote(mtof(chord[0] - 12), t, STEP * 1.8, 'sawtooth', 0.2, 500); // baixo grave
-        if (s === 0) chord.forEach(m => synthNote(mtof(m), t, STEP * 15, 'triangle', 0.05, 1200)); // pad
-        const up = (bar % 2 === 1 && s >= 12) ? 24 : 12;             // arpejo sobe no fim das frases
-        synthNote(mtof(chord[ARP[s]] + up), t, STEP * 0.9, 'square', 0.03, 2500, true);
+      // Acordes em MIDI (4 por progressão), arpejos (índice no acorde de 2 oitavas, -1 = pausa) e baixos
+      const PROGS = [
+        [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]], // Am F C G
+        [[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 48, 52]], // Dm Bb C Am
+        [[53, 57, 60], [55, 59, 62], [52, 55, 59], [57, 60, 64]], // F G Em Am
+        [[48, 52, 55], [55, 59, 62], [57, 60, 64], [53, 57, 60]], // C G Am F
+        [[57, 60, 64], [55, 59, 62], [53, 57, 60], [52, 56, 59]], // Am G F E
+        [[52, 55, 59], [48, 52, 55], [55, 59, 62], [50, 54, 57]]  // Em C G D
+      ];
+      const ARPS = [
+        [0, 2, 1, 2, 0, 2, 1, 2, 0, 2, 1, 2, 1, 2, 0, 2],
+        [0, 1, 2, 3, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 4, 3],
+        [0, -1, 2, -1, 1, -1, 3, -1, 0, -1, 2, -1, 4, -1, 3, -1],
+        [3, 2, 1, 0, 3, 2, 1, 0, 4, 3, 2, 1, 5, 4, 3, 2],
+        [0, 0, 3, -1, 1, 1, 4, -1, 2, 2, 5, -1, 1, -1, 3, -1]
+      ];
+      const BASSES = [
+        { p: [0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1], len: 1.8 },
+        { p: [0, -1, 12, -1, 0, -1, 12, -1, 0, -1, 12, -1, 0, -1, 12, -1], len: 1.8 },
+        { p: [0, -1, -1, 0, -1, -1, 0, -1, -1, -1, 7, -1, 0, -1, 12, -1], len: 2.5 },
+        { p: [0, -1, -1, -1, -1, -1, -1, -1, 7, -1, -1, -1, 5, -1, -1, -1], len: 6 }
+      ];
+      // drums: 1 = 4/4, 2 = meio-tempo | hats16 = chimbal rápido | roll = caixa acelerando no fim
+      const SECTIONS = {
+        intro:  { pad: 1, arp: 1, bells: 1 },
+        groove: { drums: 1, bass: 1, pad: 1, arp: 1 },
+        verse:  { drums: 1, bass: 1, pad: 1, lead: 1 },
+        brk:    { hats: 1, pad: 1, arp: 1, bells: 1 },
+        build:  { drums: 2, bass: 1, arp: 1, roll: 1 },
+        chorus: { drums: 1, hats16: 1, bass: 1, pad: 1, arp: 1, lead: 1, stabs: 1 }
+      };
+      const PLANS = [
+        ['intro', 'groove', 'verse', 'chorus', 'brk', 'build', 'chorus'],
+        ['intro', 'verse', 'groove', 'brk', 'verse', 'build', 'chorus', 'chorus'],
+        ['groove', 'verse', 'chorus', 'brk', 'build', 'chorus']
+      ];
+      // Melodia: passeio aleatório pelas notas do acorde (cada nota = [índice, duração em passos])
+      function makeMotif() {
+        const m = []; let i = 2, s = 0;
+        while (s < 32) {
+          const len = rnd([1, 2, 2, 2, 3, 4]);
+          if (s && Math.random() < 0.2) { s += len; continue; }
+          i = Math.max(0, Math.min(5, i + rnd([-2, -1, -1, 0, 1, 1, 2])));
+          m[s] = [i, Math.min(len, 32 - s)]; s += len;
+        }
+        return m;
+      }
+      const mutate = a => a.map(n => n && Math.random() < 0.3 ? [Math.max(0, Math.min(5, n[0] + rnd([-1, 1]))), n[1]] : n);
+
+      let song = null, songStep = 0;
+      function newSong() {
+        const A = makeMotif();
+        song = {
+          prog: rnd(PROGS), tr: rnd([-4, -2, 0, 0, 2, 3]), plan: rnd(PLANS), arp: rnd(ARPS), bass: rnd(BASSES),
+          wave: rnd(['square', 'triangle', 'square', 'sawtooth']), motifs: [A, mutate(A), A, makeMotif()]
+        };
+        songStep = 0;
+        STEP = 60 / rnd([108, 114, 118, 124]) / 4;
+        if (echo) echo.delayTime.setValueAtTime(STEP * 3, audioCtx.currentTime);
+      }
+
+      function playMusicStep(t) {
+        if (!song || songStep >= song.plan.length * 128) newSong();
+        const sec = SECTIONS[song.plan[songStep >> 7]], st = songStep & 127, bar = st >> 4, s = st & 15;
+        songStep++;
+        const chord = song.prog[bar & 3].map(m => m + song.tr), ext = [...chord, ...chord.map(m => m + 12)];
+        if (sec.drums) {
+          if (st === 0) noiseHit(t, 1.4, 0.16, 4000);                                         // prato no começo da seção
+          if (sec.drums === 2 ? s === 0 || s === 10 : s % 4 === 0) kick(t);
+          if (bar === 7 && s >= 12) noiseHit(t, 0.1, 0.12 + (s - 12) * 0.05, 1200);           // virada no fim da seção
+          else if (sec.drums === 2 ? s === 8 : s === 4 || s === 12) noiseHit(t, 0.18, 0.3, 1500);
+        }
+        if (sec.roll && bar >= 6 && s % (bar === 7 ? 1 : 2) === 0) noiseHit(t, 0.08, 0.05 + st / 128 * 0.15, 1800);
+        if ((sec.drums || sec.hats) && s % 4 === 2) noiseHit(t, 0.05, sec.hats ? 0.07 : 0.12, 7000);
+        if (sec.hats16 && s % 2 === 1) noiseHit(t, 0.03, 0.05, 9000);
+        if (sec.bass && song.bass.p[s] >= 0) synthNote(mtof(chord[0] - 12 + song.bass.p[s]), t, STEP * song.bass.len, 'sawtooth', 0.2, 500);
+        if (sec.pad && s === 0) chord.forEach(m => synthNote(mtof(m), t, STEP * 15, 'triangle', 0.05, 1200));
+        if (sec.stabs && (s === 0 || s === 6 || s === 12)) chord.forEach(m => synthNote(mtof(m + 12), t, STEP * 1.5, 'sawtooth', 0.025, 1800));
+        if (sec.arp && song.arp[s] >= 0) synthNote(mtof(ext[song.arp[s]] + 12), t, STEP * 0.9, 'square', sec.lead ? 0.02 : 0.03, 2500, true);
+        const n = sec.lead && song.motifs[(bar >> 1) & 3][(bar & 1) * 16 + s];
+        if (n) synthNote(mtof(ext[n[0]] + 12), t, STEP * n[1] * 0.95, song.wave, sec.stabs ? 0.05 : 0.04, 2600, true);
+        if (sec.bells && s % 8 === 0 && Math.random() < 0.6) synthNote(mtof(rnd(ext) + 24), t, STEP * 6, 'sine', 0.04, 6000, true);
       }
 
       // Agendador com antecipação: mantém o ritmo preciso mesmo com o jogo rodando
       function startBackgroundMusic() {
         if (musicTimer) return;
         musicTimer = setInterval(() => {
+          if (windGain) { // vento só durante a partida
+            const storm = S.activeEvent && S.activeEvent.id === 'dust_storm';
+            windGain.gain.setTargetAtTime(!musicOn || musicPaused || inMenu ? 0 : storm ? 0.14 : 0.035, audioCtx.currentTime, 0.8);
+          }
           if (!musicOn || musicPaused || document.hidden) return;
           try {
             initAudio();
             if (!audioCtx || audioCtx.state !== 'running') return;
-            if (!musicBus) setupMusicBus();
             if (nextNoteTime < audioCtx.currentTime) nextNoteTime = audioCtx.currentTime + 0.05;
             while (nextNoteTime < audioCtx.currentTime + 0.15) {
-              playMusicStep(musicStep++, nextNoteTime);
+              playMusicStep(nextNoteTime);
               nextNoteTime += STEP;
             }
           } catch (e) {}
         }, 40);
       }
 
-      function playSound(type) {
-        if (!sfxOn) return;
-        try {
-          initAudio();
-          if (!audioCtx) return;
-
-          const now = audioCtx.currentTime;
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-
-          if (type === 'click') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
-            osc.start(now);
-            osc.stop(now + 0.08);
-          } else if (type === 'upgrade') {
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(320, now);
-            osc.frequency.exponentialRampToValueAtTime(640, now + 0.15);
-            gain.gain.setValueAtTime(0.15, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-            osc.start(now);
-            osc.stop(now + 0.15);
-          } else if (type === 'alert') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, now);
-            osc.frequency.setValueAtTime(180, now + 0.1);
-            gain.gain.setValueAtTime(0.16, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-            osc.start(now);
-            osc.stop(now + 0.25);
-          } else if (type === 'gameover') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(160, now);
-            osc.frequency.linearRampToValueAtTime(80, now + 0.6);
-            gain.gain.setValueAtTime(0.22, now);
-            gain.gain.linearRampToValueAtTime(0.01, now + 0.6);
-            osc.start(now);
-            osc.stop(now + 0.6);
-          }
-        } catch (e) {}
-      }
-
-      // Sons do menu em estilo 8-bit: 'hover' (tic), 'select' (blip duplo), 'start' (arpejo subindo + vuuush de decolagem)
-      function playMenuSfx(type) {
+      // Mini sintetizador de efeitos: cada nota = [frequência, início (s), duração (s), onda, volume, frequência final, ataque]
+      // onda 'noise' = chiado com filtro (frequência = filtro). p = afinação, v = volume (variam para não repetir)
+      function sfxNotes(notes, p = 1, v = 1) {
         if (!sfxOn) return;
         try {
           initAudio();
           if (!audioCtx) return;
           const now = audioCtx.currentTime;
-          const note = (freq, t, dur, vol) => {
-            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(freq, now + t);
-            gain.gain.setValueAtTime(vol, now + t);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + t + dur);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(now + t); osc.stop(now + t + dur);
-          };
-          if (type === 'hover') note(880, 0, 0.04, 0.04);
-          else if (type === 'select') { note(523, 0, 0.07, 0.08); note(784, 0.07, 0.1, 0.08); }
-          else if (type === 'start') {
-            [523, 659, 784, 1047, 1319].forEach((f, i) => note(f, i * 0.07, 0.12, 0.08));
-            // Vuuush: ruído com filtro abrindo, acompanha o zoom em Marte
-            const buf = audioCtx.createBuffer(1, audioCtx.sampleRate, audioCtx.sampleRate);
-            const data = buf.getChannelData(0);
-            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-            const src = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
-            src.buffer = buf;
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(200, now);
-            filter.frequency.exponentialRampToValueAtTime(5000, now + 0.9);
-            gain.gain.setValueAtTime(0.001, now);
-            gain.gain.exponentialRampToValueAtTime(0.15, now + 0.7);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 1);
-            src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-            src.start(now); src.stop(now + 1);
-          }
-        } catch (e) {}
-      }
-
-      // Mini sintetizador de efeitos 8-bit: cada nota = [frequência, início (s), duração (s), onda, volume, frequência final]
-      function sfxNotes(notes) {
-        if (!sfxOn) return;
-        try {
-          initAudio();
-          if (!audioCtx) return;
-          const now = audioCtx.currentTime;
-          notes.forEach(([f, t, dur, type, vol, f2]) => {
-            const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(f, now + t);
-            if (f2) osc.frequency.exponentialRampToValueAtTime(f2, now + t + dur);
+          notes.forEach(([f, t, dur, type, vol, f2, atk]) => {
+            const g = audioCtx.createGain(); let src;
+            if (type === 'noise') {
+              const flt = audioCtx.createBiquadFilter();
+              src = audioCtx.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+              flt.type = 'bandpass'; flt.Q.value = 1.2;
+              flt.frequency.setValueAtTime(f, now + t);
+              if (f2) flt.frequency.exponentialRampToValueAtTime(f2, now + t + dur);
+              src.connect(flt); flt.connect(g);
+            } else {
+              src = audioCtx.createOscillator(); src.type = type;
+              src.frequency.setValueAtTime(f * p, now + t);
+              if (f2) src.frequency.exponentialRampToValueAtTime(f2 * p, now + t + dur);
+              src.connect(g);
+            }
             g.gain.setValueAtTime(0.0001, now + t);
-            g.gain.exponentialRampToValueAtTime(vol, now + t + 0.02);
+            g.gain.exponentialRampToValueAtTime(vol * v, now + t + (atk || Math.min(0.02, dur / 3)));
             g.gain.exponentialRampToValueAtTime(0.0001, now + t + dur);
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.start(now + t); osc.stop(now + t + dur + 0.05);
+            g.connect(sfxBus);
+            src.start(now + t); src.stop(now + t + dur + 0.05);
           });
         } catch (e) {}
       }
       const SFX = {
-        sparkle: [[1047, 0, .15, 'square', .05], [1319, .08, .15, 'square', .05], [1568, .16, .15, 'square', .05], [2093, .24, .3, 'square', .05]],
+        // genéricos (2–3 versões cada, sorteadas)
+        click1: [[440, 0, .08, 'triangle', .12, 880]],
+        click2: [[520, 0, .07, 'triangle', .11, 980], [1300, .02, .04, 'square', .03]],
+        up1: [[320, 0, .15, 'sine', .15, 640], [640, .08, .18, 'triangle', .07, 960]],
+        up2: [[392, 0, .1, 'square', .06], [523, .08, .1, 'square', .06], [784, .16, .22, 'triangle', .08]],
+        up3: [[330, 0, .12, 'triangle', .1, 660], [660, .1, .25, 'sine', .08, 990], [2000, .1, .3, 'noise', .03, 6000]],
+        err1: [[330, 0, .1, 'square', .06], [247, .1, .18, 'square', .06]],
+        err2: [[220, 0, .22, 'sawtooth', .07, 170], [200, 0, .2, 'noise', .05, 150]],
+        gameover: [[523, 0, .35, 'triangle', .12], [494, .35, .35, 'triangle', .12], [466, .7, .35, 'triangle', .12], [440, 1.05, 1.2, 'triangle', .12, 220], [160, 0, 1.6, 'sawtooth', .07, 60], [300, 0, 1.5, 'noise', .08, 80]],
+        // cliques de cada recurso
+        ice1: [[1760, 0, .12, 'triangle', .07], [2637, .04, .25, 'sine', .05], [6000, 0, .05, 'noise', .04]],
+        ice2: [[2093, 0, .1, 'triangle', .07], [3136, .05, .28, 'sine', .04], [5000, 0, .06, 'noise', .04, 8000]],
+        food1: [[260, 0, .1, 'sine', .18, 520], [780, .05, .08, 'triangle', .05]],
+        food2: [[330, 0, .09, 'sine', .16, 700], [520, .06, .1, 'triangle', .05, 700]],
+        o21: [[420, 0, .07, 'sine', .12, 900], [560, .07, .07, 'sine', .1, 1200], [480, .14, .08, 'sine', .09, 1100]],
+        o22: [[500, 0, .06, 'sine', .12, 1000], [380, .06, .08, 'sine', .1, 900], [650, .13, .07, 'sine', .08, 1400]],
+        solar1: [[180, 0, .18, 'sawtooth', .06, 1400], [1400, .12, .15, 'square', .03, 2100], [3000, 0, .15, 'noise', .03, 8000]],
+        solar2: [[220, 0, .15, 'square', .05, 1700], [1760, .12, .18, 'triangle', .05]],
+        sci1: [[880, 0, .05, 'square', .04], [1319, .05, .05, 'square', .04], [1047, .1, .05, 'square', .04], [1568, .15, .08, 'square', .04]],
+        sci2: [[1175, 0, .05, 'square', .04], [988, .05, .05, 'square', .04], [1480, .1, .1, 'square', .04]],
+        // ações do jogo
+        build: [[1500, 0, .08, 'noise', .12], [1200, .12, .08, 'noise', .1], [110, 0, .15, 'square', .07, 70], [523, .2, .1, 'square', .06], [659, .28, .1, 'square', .06], [784, .36, .25, 'triangle', .08], [1047, .36, .25, 'triangle', .05]],
+        unlock: [[784, 0, .12, 'triangle', .07], [988, .07, .12, 'triangle', .07], [1175, .14, .12, 'triangle', .07], [1568, .21, .5, 'sine', .08], [2349, .3, .6, 'sine', .04], [4000, .2, .6, 'noise', .03, 9000]],
+        arrive: [[880, 0, .35, 'triangle', .1], [659, .3, .5, 'triangle', .1], [400, 0, .6, 'noise', .04, 200]],
+        good: [[523, 0, .1, 'square', .06], [659, .1, .1, 'square', .06], [784, .2, .1, 'square', .06], [659, .3, .1, 'square', .05], [784, .4, .3, 'square', .07], [1568, .4, .3, 'sine', .04]],
+        resolve: [[660, 0, .08, 'square', .06], [880, .08, .18, 'triangle', .08], [1320, .08, .25, 'sine', .04]],
+        tab: [[800, 0, .12, 'noise', .05, 3000], [660, .03, .05, 'square', .04], [990, .07, .06, 'square', .04]],
+        pauseOn: [[660, 0, .1, 'square', .06], [440, .1, .18, 'square', .06]],
+        pauseOff: [[440, 0, .1, 'square', .06], [660, .1, .18, 'square', .06]],
+        levelUp: [[523, 0, .15, 'square', .07], [659, .12, .15, 'square', .07], [784, .24, .15, 'square', .07], [1047, .36, .5, 'square', .08], [1568, .5, .25, 'square', .06], [2093, .6, .6, 'square', .07], [262, .36, .8, 'sawtooth', .05], [6000, .36, 1, 'noise', .05, 3000]],
+        // menu e abertura
+        sparkle: [[1047, 0, .15, 'square', .05], [1319, .08, .15, 'square', .05], [1568, .16, .15, 'square', .05], [2093, .24, .3, 'square', .05], [5000, .1, .5, 'noise', .02, 9000]],
         chime: [[784, 0, .4, 'triangle', .12], [1175, .15, .6, 'triangle', .1]],
         title: [[262, 0, .8, 'sawtooth', .05], [330, 0, .8, 'sawtooth', .04], [392, 0, .8, 'sawtooth', .04], [523, .12, 1, 'square', .05], [1047, .12, .3, 'square', .04, 2093]],
         blip: [[660, 0, .06, 'square', .05], [990, .05, .08, 'square', .05]],
-        shieldOn: [[180, 0, .5, 'sawtooth', .07, 720], [360, .05, .45, 'triangle', .06, 1440]],
+        radio: [[1200, 0, .05, 'square', .05], [1200, .1, .05, 'square', .05], [1600, .2, .08, 'square', .04], [2500, 0, .3, 'noise', .04, 1500]],
+        ignite: [[100, 0, .5, 'noise', .25, 500], [60, 0, .6, 'sine', .25, 35]],
+        boom: [[80, 0, .7, 'sine', .3, 30], [300, 0, .6, 'noise', .18, 90]],
+        whoosh: [[400, 0, .7, 'noise', .09, 2500, .3]],
+        warp: [[200, 0, 1.2, 'noise', .1, 5000, .5], [300, 0, 1.2, 'triangle', .04, 1800, .5]],
+        space: [[220, 0, 2.6, 'sine', .06, 0, 1.2], [330, 0, 2.6, 'sine', .05, 0, 1.2], [440, .2, 2.4, 'triangle', .03, 0, 1.2], [659, .4, 2.2, 'sine', .03, 0, 1]],
+        twinkle: [[2637, 0, .2, 'sine', .03], [3520, .06, .3, 'sine', .02]],
+        // escudo e foguete
+        shieldOn: [[180, 0, .5, 'sawtooth', .07, 720], [360, .05, .45, 'triangle', .06, 1440], [1000, 0, .5, 'noise', .03, 4000]],
         shieldOff: [[720, 0, .4, 'sawtooth', .06, 160]],
-        rocketDown: [[900, 0, 2.1, 'triangle', .04, 140]],
-        thud: [[110, 0, .35, 'sine', .3, 45]],
-        rocketUp: [[140, 0, 1.5, 'triangle', .04, 900]],
-        levelUp: [[523, 0, .15, 'square', .07], [659, .12, .15, 'square', .07], [784, .24, .15, 'square', .07], [1047, .36, .5, 'square', .08]]
+        rocketDown: [[900, 0, 2.1, 'triangle', .04, 140], [900, 0, 2.1, 'noise', .05, 150, .6]],
+        thud: [[110, 0, .35, 'sine', .3, 45], [250, 0, .4, 'noise', .12, 80]],
+        rocketUp: [[140, 0, 1.5, 'triangle', .04, 900], [150, 0, 1.5, 'noise', .07, 1200]]
       };
-      const sfx = name => sfxNotes(SFX[name]);
+      const sfx = (name, p, v) => sfxNotes(SFX[name], p, v);
+      const SOUND_VARIANTS = { click: ['click1', 'click2'], upgrade: ['up1', 'up2', 'up3'], alert: ['err1', 'err2'], gameover: ['gameover'] };
+      function playSound(type) { sfx(rnd(SOUND_VARIANTS[type]), 0.97 + Math.random() * 0.06); }
 
-      // Ronco do motor do foguete na abertura (ruído grave que abre e some em ~3,4 s)
+      // Clique de recurso: som próprio de cada um, afinação que sobe quando clica rápido (combo); auto clicker mais baixinho
+      let combo = 0, lastClickAt = 0;
+      function clickSfx(r) {
+        if (!autoClicking) {
+          const now = performance.now();
+          combo = now - lastClickAt < 700 ? Math.min(combo + 1, 12) : 0;
+          lastClickAt = now;
+        }
+        sfx(r + (1 + Math.floor(Math.random() * 2)), (autoClicking ? 1 : 1 + combo * 0.025) * (0.96 + Math.random() * 0.08), autoClicking ? 0.45 : 1);
+      }
+
+      // Sons do menu em estilo 8-bit: 'hover' (tic), 'select' (blip duplo), 'start' (arpejo subindo + vuuush de decolagem)
+      function playMenuSfx(type) {
+        if (type === 'hover') sfx('blip', 1.3 + Math.random() * 0.1, 0.6);
+        else if (type === 'select') sfxNotes([[523, 0, .07, 'square', .08], [784, .07, .1, 'square', .08]]);
+        else if (type === 'start') sfxNotes([523, 659, 784, 1047, 1319].map((f, i) => [f, i * 0.07, 0.12, 'square', 0.08]).concat([[200, 0, 1, 'noise', 0.15, 5000, 0.7]]));
+      }
+
+      // Ronco do motor do foguete na abertura (ruído grave + sub-grave que abrem e somem em ~3,6 s)
       function playLaunchSfx() {
-        if (!sfxOn) return;
-        try {
-          initAudio();
-          if (!audioCtx) return;
-          const now = audioCtx.currentTime, len = 3.4;
-          const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * len), audioCtx.sampleRate);
-          const d = buf.getChannelData(0);
-          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-          const src = audioCtx.createBufferSource(), filter = audioCtx.createBiquadFilter(), gain = audioCtx.createGain();
-          src.buffer = buf;
-          filter.type = 'lowpass';
-          filter.frequency.setValueAtTime(150, now);
-          filter.frequency.exponentialRampToValueAtTime(900, now + 1.2);
-          filter.frequency.exponentialRampToValueAtTime(200, now + len);
-          gain.gain.setValueAtTime(0.001, now);
-          gain.gain.exponentialRampToValueAtTime(0.5, now + 0.6);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + len);
-          src.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-          src.start(now); src.stop(now + len);
-        } catch (e) {}
+        sfxNotes([[150, 0, 3.6, 'noise', 0.45, 220, 0.6], [55, 0, 3.4, 'sine', 0.2, 35, 0.5], [600, 0.9, 2.4, 'noise', 0.12, 250, 0.4]]);
       }
 
       // Sirene que começa bem baixinha e cresce exponencialmente (sobe e desce 3 vezes, ~3 segundos)
@@ -1745,7 +1794,7 @@
           gain.gain.exponentialRampToValueAtTime(0.07, now + 2.6);
           gain.gain.linearRampToValueAtTime(0.0001, now + 3);
           osc.connect(gain);
-          gain.connect(audioCtx.destination);
+          gain.connect(sfxBus);
           osc.start(now);
           osc.stop(now + 3);
         } catch (e) {}
@@ -2818,7 +2867,7 @@
         const gain = clickGain('ice');
         S.water = Math.min(S.capWater, S.water + gain);
         S.totalClicks++;
-        playSound('click');
+        clickSfx('ice');
         spawnFloatingText(btn, `+${gain} Water!`, 'text-emerald-400');
         setTopAlert('success', 'SUCCESS', `You melted ice and gained +${gain} liters of Water!`);
         renderHUD();
@@ -2836,7 +2885,7 @@
         const gain = clickGain('food');
         S.food = Math.min(S.capFood, S.food + gain);
         S.totalClicks++;
-        playSound('click');
+        clickSfx('food');
         spawnFloatingText(btn, `+${gain} Food!`, 'text-emerald-400');
         setTopAlert('success', 'SUCCESS', `Harvest complete! +${gain} Food stored for the crew.`);
         renderHUD();
@@ -2860,7 +2909,7 @@
         const gain = clickGain('o2');
         S.o2 = Math.min(S.capO2, S.o2 + gain);
         S.totalClicks++;
-        playSound('click');
+        clickSfx('o2');
         spawnFloatingText(btn, `+${gain} Oxygen!`, 'text-emerald-400');
         setTopAlert('success', 'SUCCESS', `Fresh oxygen generated! +${gain} Oxygen to breathe.`);
         renderHUD();
@@ -2881,7 +2930,7 @@
         }
         S.energy = Math.min(S.capEnergy, S.energy + gain);
         S.totalClicks++;
-        playSound('click');
+        clickSfx('solar');
         spawnFloatingText(btn, `+${gain} Energy!`, 'text-emerald-400');
         if (!S.activeEvent) {
           setTopAlert('success', 'SUCCESS', `Batteries charged! +${gain} solar Energy.`);
@@ -2902,7 +2951,7 @@
         S.science += gain;
         S.totalSciEarned += gain;
         S.totalClicks++;
-        playSound('click');
+        clickSfx('sci');
         spawnFloatingText(btn, `+${gain} Science`, 'text-emerald-400');
         setTopAlert('success', 'SUCCESS', `Experiment complete! +${gain} Science points.`);
         renderHUD();
@@ -2919,12 +2968,20 @@
         initAudio();
         startBackgroundMusic();
         playLaunchSfx();
+        sfx('radio');
         launchAt = performance.now();
         document.getElementById('intro').classList.add('playing');
         // 0–0,9 s ignição | 0,9–3,5 s decolagem pelo céu e nuvens | depois espaço: textos e o foguete sai rumo a Marte
         introTimers = [
-          setTimeout(() => sfx('rocketUp'), 900),                                                     // decolagem
-          setTimeout(() => sfx('sparkle'), 3700),                                                     // NASA Space Apps aparece
+          setTimeout(() => sfx('ignite'), 150),                                                    // ignição
+          setTimeout(() => { sfx('rocketUp'); sfx('whoosh'); }, 900),                             // decolagem
+          setTimeout(() => sfx('whoosh', 1.3), 1700),                                              // nuvens passando
+          setTimeout(() => sfx('boom'), 2300),                                                      // estrondo ao furar as nuvens
+          setTimeout(() => sfx('whoosh', 0.8), 2700),
+          setTimeout(() => sfx('space'), 3000),                                                     // chega no espaço
+          setTimeout(() => sfx('sparkle'), 3700),                                                   // NASA Space Apps aparece
+          setTimeout(() => sfx('warp'), 4300),                                                      // foguete dispara rumo a Marte
+          ...[4800, 5300, 5700, 6900, 7600, 8300].map(ms => setTimeout(() => sfx('twinkle', 0.8 + Math.random() * 0.6), ms)), // estrelas brilhando
           setTimeout(() => { document.getElementById('intro').classList.add('step2'); sfx('chime'); }, 6400), // equipe
           setTimeout(() => finishIntro(), 9200)
         ];
@@ -3089,7 +3146,7 @@
         S.science -= TREE[k].cost;
         S.tree[k] = true;
         setTopAlert('success', 'UNLOCKED!', `${UPGRADES_DEF[k].title} can now be built in the Build tab!`);
-        sfx('chime');
+        sfx('unlock');
         renderHUD();
       };
 
@@ -3235,7 +3292,7 @@
 
           const built = BUILD_KEYS.includes(key);
           setTopAlert('success', built ? 'BUILT' : 'UPGRADE COMPLETE', `Congratulations! ${def.title} has been ${built ? 'built' : 'upgraded'}!`);
-          playSound('upgrade');
+          sfx(built ? 'build' : 'up2');
           spawnFloatingText(btn, built ? 'Built!' : 'Upgraded!', 'text-blue-400');
           renderHUD();
         } else {
@@ -3361,7 +3418,7 @@
         S.eventTimer = randEvt.good ? randEvt.duration : randEvt.duration + (diff.phase - 1) * 2;
         // Todo evento (problema ou notícia boa) aparece no aviso de tela cheia com as escolhas
         showEventAlert(S.activeEvent);
-        if (randEvt.good) playSound('upgrade');
+        if (randEvt.good) sfx('good');
         renderTopAlertBar();
         renderHUD();
       }
@@ -3394,7 +3451,7 @@
         }
         if (act.then === 'shield') S.radiation = Math.max(0, S.radiation - 15);
         endActiveEvent();
-        playSound('upgrade');
+        sfx('resolve');
         spawnFloatingText(btn, act.pay ? `-${act.amt} ${names[act.pay]}` : `+${act.amt} ${names[act.gain]}`, 'text-emerald-400');
         renderHUD();
       };
@@ -3561,7 +3618,7 @@
         musicPaused = gamePaused;
         document.getElementById('icon-pause').textContent = gamePaused ? 'play_arrow' : 'pause';
         document.getElementById('pause-overlay').classList.toggle('hidden', !gamePaused);
-        playSound('click');
+        sfx(gamePaused ? 'pauseOn' : 'pauseOff');
       };
 
       function gameTick() {
@@ -3696,7 +3753,7 @@
           if (arriving > 0) {
             S.population += arriving;
             if (S.population > S.peakPopulation) S.peakPopulation = S.population;
-            playSound(overcrowd() ? 'alert' : 'upgrade');
+            overcrowd() ? playSound('alert') : sfx('arrive');
             if (overcrowd()) setTopAlert('error', 'BASE OVERCROWDED', `${overcrowd()} astronaut${overcrowd() > 1 ? 's have' : ' has'} no bed! They lose Health and Science drops. Build a Habitat Module!`);
             else if (!S.activeEvent) setTopAlert('warning', 'NEW CREW', `A spacecraft brought ${arriving} new astronaut${arriving > 1 ? 's' : ''}! More people eat more: harvest more Food!`);
           }
@@ -4834,7 +4891,7 @@
           S.bldLv = S.bldLv || {};
           S.bldLv[bldId(selected)] = l + 1;
           if (key === 'habitat') habitatSpace();
-          playSound('upgrade');
+          sfx('build');
           setTopAlert('success', 'UPGRADE COMPLETE', `${UPGRADES_DEF[key].title} #${selected.n + 1} is now Level ${l + 1}!`);
           renderHUD();
           renderBuildingWindow();
@@ -4909,7 +4966,7 @@
       window.showScreen = function(name) {
         if (name === openScreen) name = 'acoes';
         openScreen = name;
-        if (name !== 'acoes') playSound('click');
+        if (name !== 'acoes') sfx('tab');
         document.querySelectorAll('[data-screen]').forEach(el => { el.hidden = el.dataset.screen !== 'acoes' && el.dataset.screen !== name; });
         document.getElementById('window-backdrop').hidden = name === 'acoes';
         if (name === 'dados') drawDataTab();
