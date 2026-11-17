@@ -338,6 +338,21 @@
     .tier-strip .locked { color:#9a8a8a; }
     .tier-strip .locked img { filter:brightness(0); opacity:.45; }
     .tier-strip .current { outline:2px solid var(--res); background:rgba(0,0,0,.3); }
+    /* Aba Click e cadeados (o desenho do cadeado vem do JS em --lock-img) */
+    .res-click { --res: #ffd23f; }
+    .click-art { font-size:64px !important; }
+    .click-hand { font-size:30px !important; color:#fff; margin:34px 0 0 -18px; animation: click-tap 1.2s ease-in-out infinite; }
+    @keyframes click-tap { 0%,60%,100% { transform:translate(0,0); } 30% { transform:translate(-4px,-4px) scale(.9); } }
+    .lock-ico { display:inline-block; width:12px; height:15px; vertical-align:-2px; background:var(--lock-img) center/contain no-repeat; image-rendering:pixelated; }
+    .res-card { position:relative; }
+    .res-card.is-locked > :not(.lock-cover) { filter:grayscale(1) brightness(.6); }
+    .lock-cover { display:none; position:absolute; inset:0; z-index:2; flex-direction:column; align-items:center; justify-content:center; gap:8px; border-radius:inherit; background:rgba(8,6,18,.55); color:#fff; font-size:12px; line-height:1.35; text-align:center; cursor:pointer; }
+    .res-card.is-locked .lock-cover { display:flex; }
+    .lock-cover .lock-ico { width:44px; height:55px; animation: lock-bob 2.4s ease-in-out infinite; filter:drop-shadow(0 3px 0 rgba(0,0,0,.5)); }
+    .lock-cover b { color:#ffd23f; }
+    .lock-cover small { color:#cbd5e1; }
+    @keyframes lock-bob { 0%,100% { transform:translateY(0) rotate(0); } 45% { transform:translateY(-3px) rotate(-4deg); } 55% { transform:translateY(-3px) rotate(4deg); } }
+    .build-tab.tab-locked::after { content:''; display:inline-block; width:12px; height:15px; margin-left:4px; image-rendering:pixelated; background:var(--lock-img) center/contain no-repeat; }
     [data-screen="predio"].game-window { width:min(420px, calc(100vw - 32px)); }
     .nasa-fact { margin-top:6px; padding:5px 8px; border-left:3px solid #5ad1ff; background:rgba(90,209,255,.08); font-size:12px !important; color:#cfe9f5; line-height:1.4; }
     .nasa-fact b { color:#5ad1ff; }
@@ -859,7 +874,7 @@
                 </span>
               </div>
               <p class="text-[11px] text-neutral-300 mt-1 leading-tight">
-                Consumes less Water and grants +2 Water per click!
+                Cleans and reuses water, so each astronaut drinks less!
               </p>
             </div>
             <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
@@ -879,7 +894,7 @@
                 </span>
               </div>
               <p class="text-[11px] text-neutral-300 mt-1 leading-tight">
-                Grants +4 Food per click and generates +1 Food every second!
+                Grows food on its own: +1 Food every second!
               </p>
             </div>
             <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
@@ -899,7 +914,7 @@
                 </span>
               </div>
               <p class="text-[11px] text-neutral-300 mt-1 leading-tight">
-                Generates +2 Energy every second and grants +5 Energy per click!
+                Generates +2 Energy every second from the Sun!
               </p>
             </div>
             <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
@@ -939,7 +954,7 @@
                 </span>
               </div>
               <p class="text-[11px] text-neutral-300 mt-1 leading-tight">
-                The crew breathes less Oxygen, and you get +3 Oxygen per click!
+                Cleans the air, so the crew breathes less Oxygen!
               </p>
             </div>
             <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
@@ -959,7 +974,7 @@
                 </span>
               </div>
               <p class="text-[11px] text-neutral-300 mt-1 leading-tight">
-                Communicates with Earth: <span class="text-emerald-400 font-bold">+1.5 Science</span> every second and <span class="text-emerald-400 font-bold">+3</span> per research!
+                Communicates with Earth: <span class="text-emerald-400 font-bold">+1.5 Science</span> every second!
               </p>
             </div>
             <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
@@ -1899,7 +1914,8 @@
           autoIce: 0,
           autoO2: 0,
           autoSci: 0, autoFood: 0,
-          autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0
+          autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
+          clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
         },
 
         // Evento de clima ativo
@@ -2217,7 +2233,7 @@
           return;
         }
         S.energy -= 5;
-        const gain = 6 + (S.upgrades.recycler * 2);
+        const gain = clickGain('ice');
         S.water = Math.min(S.capWater, S.water + gain);
         S.totalClicks++;
         playSound('click');
@@ -2235,7 +2251,7 @@
           return;
         }
         S.energy -= 4;
-        const gain = 6 + (S.upgrades.greenhouse * 4);
+        const gain = clickGain('food');
         S.food = Math.min(S.capFood, S.food + gain);
         S.totalClicks++;
         playSound('click');
@@ -2259,7 +2275,7 @@
         }
         S.water -= 4;
         S.energy -= 5;
-        const gain = 8 + (S.upgrades.o2tech * 3);
+        const gain = clickGain('o2');
         S.o2 = Math.min(S.capO2, S.o2 + gain);
         S.totalClicks++;
         playSound('click');
@@ -2277,7 +2293,7 @@
           return;
         }
         S.science -= 3;
-        let gain = 10 + (S.upgrades.solar * 5);
+        let gain = clickGain('solar');
         if (S.activeEvent && S.activeEvent.id === 'dust_storm') {
           gain = Math.max(4, Math.floor(gain * 0.35));
         }
@@ -2300,7 +2316,7 @@
           return;
         }
         S.energy -= 6;
-        const gain = 5 + (S.upgrades.antenna * 3);
+        const gain = clickGain('sci');
         S.science += gain;
         S.totalSciEarned += gain;
         S.totalClicks++;
@@ -2443,17 +2459,35 @@
         autoO2:     { baseCost: 70, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Oxygen Generator' },
         autoSci:    { baseCost: 90, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Build',   title: 'Science Lab' },
         autoEnergy: { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Power Plant' },
-        autoFood:   { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Farm Tunnel' }
+        autoFood:   { baseCost: 60, maxLvl: Infinity, costMult: 1.25, defaultBtnLabel: 'Build',   title: 'Farm Tunnel' },
+        // Aba Click: melhoram só o clique (raiz da árvore de habilidades)
+        clickIce:   { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Ice Pickaxe' },
+        clickFood:  { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Harvest Gloves' },
+        clickO2:    { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
+        clickSolar: { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
+        clickSci:   { baseCost: 20, maxLvl: Infinity, costMult: 1.5 , defaultBtnLabel: 'Upgrade', title: 'Field Notebook' }
       };
+      // Ganho de cada clique: [melhoria, base, +por nível, recurso]
+      const CLICK_UP = { ice: ['clickIce', 6, 2, 'Water'], food: ['clickFood', 6, 4, 'Food'], o2: ['clickO2', 8, 3, 'Oxygen'], solar: ['clickSolar', 10, 5, 'Energy'], sci: ['clickSci', 5, 3, 'Science'] };
+      function clickGain(r) { const [k, base, step] = CLICK_UP[r]; return base + S.upgrades[k] * step; }
+      // Cadeados: o prédio abre quando a melhoria de clique chega ao nível pedido (quem já construiu continua livre)
+      const LOCKS = {
+        autoIce: ['clickIce', 1], storage: ['clickIce', 2], recycler: ['clickIce', 3],
+        autoFood: ['clickFood', 1], habitat: ['clickFood', 2], greenhouse: ['clickFood', 3],
+        autoO2: ['clickO2', 1], o2tech: ['clickO2', 3],
+        autoEnergy: ['clickSolar', 1], shield: ['clickSolar', 2], solar: ['clickSolar', 3],
+        autoSci: ['clickSci', 1], antenna: ['clickSci', 3]
+      };
+      const isLocked = k => !!LOCKS[k] && !S.upgrades[k] && S.upgrades[LOCKS[k][0]] < LOCKS[k][1];
 
       // O que cada nível de melhoria dá (mostra "Now" e "Next" no card)
       const UPGRADE_STATS = {
-        recycler:   l => `+${8 + l * 2} Water per click`,
-        greenhouse: l => `+${8 + l * 4} Food per click, +${l} Food/s`,
-        solar:      l => `+${12 + l * 5} Energy per click, +${(3.2 + l * 2).toFixed(1)} Energy/s`,
+        recycler:   l => `Each astronaut drinks ${(0.5 * Math.pow(0.92, l)).toFixed(2)} Water/s`,
+        greenhouse: l => `+${l} Food/s`,
+        solar:      l => `+${(3.2 + l * 2).toFixed(1)} Energy/s`,
         shield:     l => `Shield uses ${(SHIELD_COST * Math.pow(0.9, l)).toFixed(1)} Energy/s`,
-        antenna:    l => `+${6 + l * 3} Science per research, +${(l * 1.5).toFixed(1)} Science/s`,
-        o2tech:     l => `+${10 + l * 3} Oxygen per click, each astronaut breathes ${Math.max(0.1, 0.6 - l * 0.05).toFixed(2)}/s`,
+        antenna:    l => `+${(l * 1.5).toFixed(1)} Science/s`,
+        o2tech:     l => `Each astronaut breathes ${(0.6 * Math.pow(0.92, l)).toFixed(2)} Oxygen/s`,
         // Construções: total de todas as cópias (conta também os upgrades individuais feitos no mapa)
         autoIce:    l => `+${r1((l + bldPower('autoIce') - S.upgrades.autoIce) * 2 * prodMult())} Water/s`,
         autoO2:     l => `+${r1((l + bldPower('autoO2') - S.upgrades.autoO2) * 2.5 * prodMult())} Oxygen/s`,
@@ -2499,6 +2533,32 @@
       // Tier do prédio de uma melhoria: níveis 1-2 = Tier 1, 3-4 = Tier 2, 5+ = Tier 3
       const STARTS_BUILT = ['autoPop']; // a base inicia só com o módulo de comando e uma estação de foguete pequena
       function upgradeTier(level) { return level >= 5 ? 3 : level >= 3 ? 2 : 1; }
+      // Cards da aba Click (o "Now / Next" e o próximo cadeado aberto aparecem no renderHUD)
+      const CLICK_CARD = {
+        clickIce: ['water_drop', '#7bd0ff', 'A sharper pick: melt more ice in each click!'],
+        clickFood: ['restaurant', '#e0a82e', 'Pick more food in each harvest!'],
+        clickO2: ['air', '#34d399', 'A faster machine: more Oxygen in each click!'],
+        clickSolar: ['sunny', '#ffd23f', 'Brush the Mars dust off the panels: more Energy in each click!'],
+        clickSci: ['psychology', '#c354ff', 'Write down every discovery: more Science in each experiment!']
+      };
+      Object.values(CLICK_UP).forEach(([k, base, step, name]) => { UPGRADE_STATS[k] = l => `+${base + l * step} ${name} per click`; });
+      document.querySelector('[data-screen="upgrades"] .grid').insertAdjacentHTML('afterbegin', Object.entries(CLICK_CARD).map(([k, [icon, color, txt]]) => `
+        <div class="res-card res-click bg-surface-low border border-surface-border p-3 rounded-xl flex flex-col justify-between">
+          <div class="build-art"><span class="material-symbols-outlined click-art" style="color:${color}">${icon}</span><span class="material-symbols-outlined click-hand">touch_app</span></div>
+          <div>
+            <div class="flex items-center justify-between"><span class="text-xs font-bold text-blue-400 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">touch_app</span> ${UPGRADES_DEF[k].title}</span></div>
+            <p class="text-[11px] text-neutral-300 mt-1 leading-tight">${txt}</p>
+            <p class="up-next" id="next-up-${k}"></p>
+            <p class="up-next" id="unl-${k}"></p>
+          </div>
+          <div class="mt-2.5 pt-2 border-t border-surface-border/50 flex items-center justify-between">
+            <span class="font-mono-code text-[10px] text-blue-400 font-bold" id="cost-up-${k}"></span>
+            <button class="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-[11px] font-mono-code transition" id="btn-up-${k}" onclick="buyUpgrade('${k}', event)" type="button">Upgrade</button>
+          </div>
+        </div>`).join(''));
+      // Capa de cadeado em cada prédio trancado (clicar leva para a aba Click)
+      Object.keys(LOCKS).forEach(k => document.getElementById(`btn-up-${k}`).closest('.res-card').insertAdjacentHTML('beforeend',
+        `<button class="lock-cover" type="button" onclick="showBuildTab('res-click')"><i class="lock-ico"></i><span id="lock-txt-${k}"></span></button>`));
       // Selo no canto de cada card: "Built: N" ou "Level N" (atualizado no renderHUD)
       Object.keys(UPGRADES_DEF).forEach(key => {
         const btn = document.getElementById(`btn-up-${key}`);
@@ -2522,6 +2582,11 @@
         const def = UPGRADES_DEF[key];
         const currentLvl = S.upgrades[key];
         if (currentLvl >= def.maxLvl) return;
+        if (isLocked(key)) {
+          setTopAlert('error', 'LOCKED', `Upgrade ${UPGRADES_DEF[LOCKS[key][0]].title} to Lv ${LOCKS[key][1]} in the Click tab first!`);
+          playSound('alert');
+          return;
+        }
 
         const btn = (e && e.currentTarget) || document.getElementById(`btn-up-${key}`);
         const cost = getUpgradeCost(key);
@@ -2537,6 +2602,11 @@
           setTopAlert('success', built ? 'BUILT' : 'UPGRADE COMPLETE', `Congratulations! ${def.title} has been ${built ? 'built' : 'upgraded'}!`);
           playSound('upgrade');
           spawnFloatingText(btn, built ? 'Built!' : 'Upgraded!', 'text-blue-400');
+          const opened = Object.keys(LOCKS).filter(k => LOCKS[k][0] === key && LOCKS[k][1] === S.upgrades[key] && !S.upgrades[k]);
+          if (opened.length) {
+            setTopAlert('success', 'UNLOCKED!', `${opened.map(k => UPGRADES_DEF[k].title).join(' + ')} can now be built!`);
+            sfx('chime');
+          }
           renderHUD();
         } else {
           setTopAlert('error', 'ERROR: SCIENCE', `You need ${cost} Science points! Click "Research".`);
@@ -2819,7 +2889,8 @@
             autoIce: 0,
             autoO2: 0,
             autoSci: 0, autoFood: 0,
-            autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0
+            autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
+            clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
           },
 
           activeEvent: null,
@@ -3162,13 +3233,13 @@
         document.getElementById('crew-drain-o2').textContent = `${crewO2Only.toFixed(1)}/s`;
 
         // Valores de clique atualizados & Guia Visual para Crianças (pulso amarelo no botão necessário)
-        document.getElementById('click-val-ice').textContent = 6 + (S.upgrades.recycler * 2);
-        document.getElementById('click-val-food').textContent = 6 + (S.upgrades.greenhouse * 4);
-        document.getElementById('click-val-o2').textContent = 8 + (S.upgrades.o2tech * 3);
-        let solarClickVal = 10 + (S.upgrades.solar * 5);
+        document.getElementById('click-val-ice').textContent = clickGain('ice');
+        document.getElementById('click-val-food').textContent = clickGain('food');
+        document.getElementById('click-val-o2').textContent = clickGain('o2');
+        let solarClickVal = clickGain('solar');
         if (S.activeEvent && S.activeEvent.id === 'dust_storm') solarClickVal = Math.max(4, Math.floor(solarClickVal * 0.35));
         document.getElementById('click-val-solar').textContent = solarClickVal;
-        document.getElementById('click-val-sci').textContent = 5 + (S.upgrades.antenna * 3);
+        document.getElementById('click-val-sci').textContent = clickGain('sci');
 
         const btnIce = document.getElementById('btn-click-ice');
         const btnFood = document.getElementById('btn-click-greenhouse');
@@ -3204,7 +3275,8 @@
           const lvl = S.upgrades[key];
           const cost = getUpgradeCost(key);
           const lvlEl = document.getElementById(`lvl-up-${key}`);
-          if (lvlEl) lvlEl.textContent = !(lvl > 0 || STARTS_BUILT.includes(key)) ? 'Not built' : BLD_TYPE[key] ? `Built: ${lvl}` : `Level ${lvl}`;
+          const isBuilt = lvl > 0 || STARTS_BUILT.includes(key) || CLICK_CARD[key];
+          if (lvlEl) lvlEl.textContent = !isBuilt ? 'Not built' : BLD_TYPE[key] ? `Built: ${lvl}` : `Level ${lvl}`;
           const costEl = document.getElementById(`cost-up-${key}`);
           const btnEl = document.getElementById(`btn-up-${key}`);
 
@@ -3217,16 +3289,30 @@
           }
           const nextEl = document.getElementById(`next-up-${key}`);
           if (nextEl) nextEl.innerHTML = `Now: ${UPGRADE_STATS[key](lvl)}<br>` + (lvl >= def.maxLvl ? '<span class="text-amber">Maximum level!</span>' : `<span class="text-emerald-400">Next: ${UPGRADE_STATS[key](lvl + 1)}</span>`);
+          const locked = isLocked(key);
           if (btnEl) {
-            btnEl.disabled = lvl >= def.maxLvl || S.science < cost;
-            btnEl.textContent = lvl >= def.maxLvl ? 'Complete' : (lvl === 0 && !STARTS_BUILT.includes(key) ? 'Build' : def.defaultBtnLabel);
+            btnEl.disabled = locked || lvl >= def.maxLvl || S.science < cost;
+            btnEl.textContent = locked ? 'Locked' : lvl >= def.maxLvl ? 'Complete' : (!isBuilt ? 'Build' : def.defaultBtnLabel);
+            btnEl.closest('.res-card').classList.toggle('is-locked', locked);
+          }
+          if (locked) {
+            const [ck, n] = LOCKS[key];
+            document.getElementById(`lock-txt-${key}`).innerHTML = `Upgrade <b>${UPGRADES_DEF[ck].title}</b><br>to Lv ${n} to unlock<br><small>(${S.upgrades[ck]}/${n})</small>`;
+          }
+          // Aba Click: próximo prédio que este nível destrava
+          const unl = document.getElementById(`unl-${key}`);
+          if (unl) {
+            const next = Object.keys(LOCKS).filter(k => LOCKS[k][0] === key && lvl < LOCKS[k][1]).sort((a, b) => LOCKS[a][1] - LOCKS[b][1]);
+            unl.innerHTML = next.length ? `<i class="lock-ico"></i> Lv ${LOCKS[next[0]][1]} unlocks: <b>${next.filter(k => LOCKS[k][1] === LOCKS[next[0]][1]).map(k => UPGRADES_DEF[k].title).join(', ')}</b>` : '<span class="text-emerald-400">All buildings unlocked!</span>';
           }
         });
 
         if (window.refreshBuildingWindow) window.refreshBuildingWindow();
         // ● na sub-aba do Build quando dá para comprar algo nela
-        document.querySelectorAll('.build-tab').forEach(t => t.querySelector('.build-dot').classList.toggle('hidden',
-          ![...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat} [id^="btn-up-"]`)].some(b => !b.disabled)));
+        document.querySelectorAll('.build-tab').forEach(t => {
+          t.querySelector('.build-dot').classList.toggle('hidden', ![...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat} [id^="btn-up-"]`)].some(b => !b.disabled));
+          t.classList.toggle('tab-locked', [...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat}`)].every(c => c.classList.contains('is-locked')));
+        });
 
         drawDataTab();
 
@@ -3976,7 +4062,7 @@
       document.querySelector('[data-screen="upgrades"] .grid').append(...melh.querySelector('.grid').children);
       melh.remove();
       // Sub-abas do Build: uma por recurso (a cor vem da classe res-* de cada card)
-      const BUILD_TABS = [['res-water', 'Water', 'water_drop'], ['res-food', 'Food', 'restaurant'], ['res-o2', 'Oxygen', 'air'],
+      const BUILD_TABS = [['res-click', 'Click', 'touch_app'], ['res-water', 'Water', 'water_drop'], ['res-food', 'Food', 'restaurant'], ['res-o2', 'Oxygen', 'air'],
         ['res-energy', 'Energy', 'bolt'], ['res-sci', 'Science', 'psychology'], ['res-rad', 'Shield', 'shield'], ['res-crew', 'Crew & Storage', 'group']];
       const buildGrid = document.querySelector('[data-screen="upgrades"] .grid');
       buildGrid.insertAdjacentHTML('beforebegin', `<div class="build-tabs-row flex flex-wrap gap-2 mb-3">${BUILD_TABS.map(([cat, name, icon]) =>
@@ -3985,7 +4071,7 @@
         buildGrid.querySelectorAll(':scope > .res-card').forEach(card => { card.hidden = !card.classList.contains(cat); });
         document.querySelectorAll('.build-tab').forEach(t => t.classList.toggle('on', t.dataset.cat === cat));
       };
-      showBuildTab('res-water');
+      showBuildTab('res-click');
       const crewSrc = document.getElementById('crew-card-src');
       document.querySelector('[data-screen="dados"]').append(...crewSrc.children);
       crewSrc.remove();
@@ -4117,6 +4203,14 @@
         const url = pixelIconUrl(ICON_MAP[name] || name);
         if (url) el.style.webkitMaskImage = el.style.maskImage = url;
       }
+
+      // Cadeado colorido em pixel art (contorno, alça prateada, corpo dourado com brilho e fechadura)
+      const LOCK_PX = ['...KKKKKK...', '..KSSSSSSK..', '.KSKKKKKKSK.', '.KSK....KSK.', '.KSK....KSK.', '.KSK....KSK.', 'KKKKKKKKKKKK', 'KHHYYYYYYYYK',
+        'KHYYYKKYYYOK', 'KYYYKKKKYYOK', 'KYYYKKKKYYOK', 'KYYYYKKYYYOK', 'KYYYYKKYYYOK', 'KOOOOOOOOOOK', 'KKKKKKKKKKKK'];
+      const LOCK_COL = { K: '#2a1f3d', S: '#c9d3dd', Y: '#ffcc33', H: '#fff3b0', O: '#c98500' };
+      let lockRects = '';
+      LOCK_PX.forEach((r, y) => [...r].forEach((c, x) => { if (LOCK_COL[c]) lockRects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${LOCK_COL[c]}"/>`; }));
+      document.documentElement.style.setProperty('--lock-img', `url("data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 15" shape-rendering="crispEdges">${lockRects}</svg>`)}")`);
 
       document.querySelectorAll('.material-symbols-outlined').forEach(applyPixelIcon);
       // Ícones trocados pelo jogo (som, alertas, saúde) são redesenhados automaticamente
