@@ -352,6 +352,29 @@
     .lock-cover b { color:#ffd23f; }
     .lock-cover small { color:#cbd5e1; }
     @keyframes lock-bob { 0%,100% { transform:translateY(0) rotate(0); } 45% { transform:translateY(-3px) rotate(-4deg); } 55% { transform:translateY(-3px) rotate(4deg); } }
+    /* Árvore de habilidades: raiz no topo, barra amarela e um galho (coluna) por recurso */
+    #skill-tree { overflow-x:auto; padding-bottom:6px; display:flex; flex-direction:column; align-items:center; }
+    .tree-root { display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 18px; border:3px solid #ffd23f; background:#2a2410; color:#fff; position:relative; }
+    .tree-root .material-symbols-outlined { font-size:32px; color:#ffd23f; }
+    .tree-root small { color:#cbd5e1; font-size:11px; }
+    .tree-root::after { content:''; position:absolute; left:50%; bottom:-27px; width:4px; height:24px; margin-left:-2px; background:#ffd23f; }
+    .tree-cols { display:flex; gap:10px; padding-top:24px; margin-top:24px; position:relative; min-width:600px; width:100%; }
+    .tree-cols::before { content:''; position:absolute; top:0; left:10%; right:10%; height:4px; background:#ffd23f; }
+    .tree-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:24px; }
+    .tree-node { position:relative; width:100%; max-width:180px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 6px; border:3px solid var(--res); background:#1d1726; color:#fff; font-size:12px; text-align:center; line-height:1.25; }
+    .tree-node::before { content:''; position:absolute; left:50%; top:-27px; width:4px; height:24px; margin-left:-2px; background:var(--res); }
+    .tree-node small { font-size:11px; }
+    .tree-img { position:relative; height:52px; display:flex; align-items:center; justify-content:center; }
+    .tree-img img { max-height:52px; max-width:90px; image-rendering:pixelated; }
+    .tree-img .lock-ico { position:absolute; width:24px; height:30px; right:-14px; bottom:-4px; }
+    .tree-cost { margin-top:3px; padding:2px 8px; background:rgba(0,0,0,.35); color:#c354ff; font-weight:700; }
+    .tree-cost.poor { color:#fb7185; }
+    .tree-node.done { background:color-mix(in srgb, var(--res) 18%, #1d1726); }
+    .tree-node.ready { animation: tree-pulse 1.4s ease-in-out infinite; cursor:pointer; }
+    .tree-node.locked { border-color:#4b4458; }
+    .tree-node.locked::before { background:#4b4458; }
+    .tree-node.locked img { filter:grayscale(1) brightness(.5); }
+    @keyframes tree-pulse { 50% { box-shadow:0 0 0 4px color-mix(in srgb, var(--res) 45%, transparent); } }
     .build-tab.tab-locked::after { content:''; display:inline-block; width:12px; height:15px; margin-left:4px; image-rendering:pixelated; background:var(--lock-img) center/contain no-repeat; }
     [data-screen="predio"].game-window { width:min(420px, calc(100vw - 32px)); }
     .nasa-fact { margin-top:6px; padding:5px 8px; border-left:3px solid #5ad1ff; background:rgba(90,209,255,.08); font-size:12px !important; color:#cfe9f5; line-height:1.4; }
@@ -672,7 +695,7 @@
     <nav class="order-last flex flex-wrap items-center gap-2 font-mono-code text-xs font-bold" role="tablist">
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="base" onclick="showScreen('base')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">shield</span> Base</button>
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="upgrades" onclick="showScreen('upgrades')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">domain</span> Build</button>
-      
+      <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="arvore" onclick="showScreen('arvore')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">tree</span> Tree<span class="build-dot hidden" id="tree-dot" style="--res:#ffd23f" title="You can unlock something">●</span></button>
       <button class="screen-tab px-3 py-2 rounded-xl border transition" data-tab="dados" onclick="showScreen('dados')" role="tab" type="button"><span class="material-symbols-outlined text-[16px]">chart-bar</span> Data</button>
       <!-- ESCUDO DE RADIAÇÃO: interruptor da base, separado dos botões de coleta -->
       <button class="shield-btn ml-auto" id="btn-click-shield" onclick="toggleShield()" title="Radiation Shield [6]" type="button">
@@ -1173,6 +1196,11 @@
     </div>
 
     <!-- TELA: DADOS -->
+    <div class="flex flex-col gap-4" data-screen="arvore">
+      <div class="flex items-center gap-3"><span class="text-[11px] font-mono-code font-bold uppercase tracking-widest text-neutral-400">Skill Tree</span><span class="flex-1 h-px bg-surface-border/70"></span></div>
+      <p class="text-[13px] text-neutral-300">Start with your clicks, then spend Science to unlock new buildings. Each node needs the one above it.</p>
+      <div id="skill-tree"></div>
+    </div>
     <div class="flex flex-col gap-4" data-screen="dados">
     <!-- SEÇÃO INFERIOR: DADOS DA MISSÃO & FONTE NASA -->
     <div class="flex items-center gap-3"><span class="text-[11px] font-mono-code font-bold uppercase tracking-widest text-neutral-400">Data</span><span class="flex-1 h-px bg-surface-border/70"></span></div>
@@ -1917,6 +1945,7 @@
           autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
           clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
         },
+        tree: {},
 
         // Evento de clima ativo
         activeEvent: null,
@@ -2470,15 +2499,37 @@
       // Ganho de cada clique: [melhoria, base, +por nível, recurso]
       const CLICK_UP = { ice: ['clickIce', 6, 2, 'Water'], food: ['clickFood', 6, 4, 'Food'], o2: ['clickO2', 8, 3, 'Oxygen'], solar: ['clickSolar', 10, 5, 'Energy'], sci: ['clickSci', 5, 3, 'Science'] };
       function clickGain(r) { const [k, base, step] = CLICK_UP[r]; return base + S.upgrades[k] * step; }
-      // Cadeados: o prédio abre quando a melhoria de clique chega ao nível pedido (quem já construiu continua livre)
-      const LOCKS = {
-        autoIce: ['clickIce', 1], storage: ['clickIce', 2], recycler: ['clickIce', 3],
-        autoFood: ['clickFood', 1], habitat: ['clickFood', 2], greenhouse: ['clickFood', 3],
-        autoO2: ['clickO2', 1], o2tech: ['clickO2', 3],
-        autoEnergy: ['clickSolar', 1], shield: ['clickSolar', 2], solar: ['clickSolar', 3],
-        autoSci: ['clickSci', 1], antenna: ['clickSci', 3]
+      // Árvore de habilidades (aba Tree): raiz no clique, um galho por recurso. Cada nó custa Science e pede
+      // o nó de cima + nível de clique e/ou nível da base. Destravar o nó libera o prédio no Build.
+      const TREE_COLS = [
+        [['autoIce', 15, { click: ['clickIce', 1] }], ['storage', 60, {}], ['recycler', 150, { base: 2 }]],
+        [['autoFood', 15, { click: ['clickFood', 1] }], ['habitat', 60, {}], ['greenhouse', 150, { base: 2 }]],
+        [['autoO2', 15, { click: ['clickO2', 1] }], ['o2tech', 120, { click: ['clickO2', 3] }]],
+        [['autoEnergy', 15, { click: ['clickSolar', 1] }], ['shield', 60, {}], ['solar', 150, { base: 2 }]],
+        [['autoSci', 25, { click: ['clickSci', 1] }], ['antenna', 200, { base: 3 }]]
+      ];
+      const TREE = {};
+      TREE_COLS.forEach(col => col.forEach(([k, cost, req], i) => { TREE[k] = { cost, ...req, parent: i ? col[i - 1][0] : null }; }));
+      const treeDone = k => !!(S.tree[k] || S.upgrades[k]);
+      const isLocked = k => !!TREE[k] && !treeDone(k);
+      // Requisitos de um nó: [texto, cumprido?]
+      function treeReqs(k) {
+        const n = TREE[k], r = [];
+        if (n.parent) r.push([UPGRADES_DEF[n.parent].title, treeDone(n.parent)]);
+        if (n.click) r.push([`${UPGRADES_DEF[n.click[0]].title} Lv ${n.click[1]}`, S.upgrades[n.click[0]] >= n.click[1]]);
+        if (n.base) r.push([`Base Lv ${n.base}`, S.baseLevel >= n.base]);
+        return r;
+      }
+      window.unlockNode = function(k) {
+        if (S.isGameOver || inMenu || treeDone(k)) return;
+        if (!treeReqs(k).every(r => r[1])) { setTopAlert('error', 'LOCKED', 'Complete the requirements of this node first!'); playSound('alert'); return; }
+        if (S.science < TREE[k].cost) { setTopAlert('error', 'ERROR: SCIENCE', `You need ${TREE[k].cost} Science to unlock it!`); playSound('alert'); return; }
+        S.science -= TREE[k].cost;
+        S.tree[k] = true;
+        setTopAlert('success', 'UNLOCKED!', `${UPGRADES_DEF[k].title} can now be built in the Build tab!`);
+        sfx('chime');
+        renderHUD();
       };
-      const isLocked = k => !!LOCKS[k] && !S.upgrades[k] && S.upgrades[LOCKS[k][0]] < LOCKS[k][1];
 
       // O que cada nível de melhoria dá (mostra "Now" e "Next" no card)
       const UPGRADE_STATS = {
@@ -2556,9 +2607,29 @@
             <button class="px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-[11px] font-mono-code transition" id="btn-up-${k}" onclick="buyUpgrade('${k}', event)" type="button">Upgrade</button>
           </div>
         </div>`).join(''));
-      // Capa de cadeado em cada prédio trancado (clicar leva para a aba Click)
-      Object.keys(LOCKS).forEach(k => document.getElementById(`btn-up-${k}`).closest('.res-card').insertAdjacentHTML('beforeend',
-        `<button class="lock-cover" type="button" onclick="showBuildTab('res-click')"><i class="lock-ico"></i><span id="lock-txt-${k}"></span></button>`));
+      // Capa de cadeado em cada prédio trancado (clicar abre a árvore)
+      Object.keys(TREE).forEach(k => document.getElementById(`btn-up-${k}`).closest('.res-card').insertAdjacentHTML('beforeend',
+        `<button class="lock-cover" type="button" onclick="showScreen('arvore')"><i class="lock-ico"></i><span>Unlock it in the<br><b>Skill Tree</b></span></button>`));
+
+      // Desenho da árvore (redesenhada a cada segundo só enquanto a aba está aberta)
+      function renderTree() {
+        const box = document.getElementById('skill-tree');
+        document.getElementById('tree-dot').classList.toggle('hidden', !Object.keys(TREE).some(k => !treeDone(k) && treeReqs(k).every(r => r[1]) && S.science >= TREE[k].cost));
+        if (box.closest('[data-screen]').hidden) return;
+        const resOf = k => [...document.getElementById(`btn-up-${k}`).closest('.res-card').classList].find(c => c.startsWith('res-') && c !== 'res-card');
+        const node = (k, res) => {
+          const card = document.getElementById(`btn-up-${k}`).closest('.res-card'), img = card.querySelector('.build-art img, .tier-strip img');
+          const done = treeDone(k), reqs = treeReqs(k), ready = !done && reqs.every(r => r[1]);
+          return `<button class="tree-node ${res} ${done ? 'done' : ready ? 'ready' : 'locked'}" onclick="unlockNode('${k}')" type="button">
+            <span class="tree-img">${img ? `<img alt="" src="${img.src}">` : ''}${done ? '' : '<i class="lock-ico"></i>'}</span>
+            <b>${UPGRADES_DEF[k].title}</b>
+            ${done ? '<small class="text-emerald-400">✔ Unlocked</small>' : reqs.map(([t, ok]) => `<small class="${ok ? 'text-emerald-400' : 'text-rose-400'}">${ok ? '✔' : '✘'} ${t}</small>`).join('') +
+              `<small class="tree-cost ${S.science >= TREE[k].cost ? '' : 'poor'}">${TREE[k].cost} Science</small>`}
+          </button>`;
+        };
+        box.innerHTML = `<button class="tree-root" onclick="showScreen('upgrades'); showBuildTab('res-click')" type="button"><span class="material-symbols-outlined">touch_app</span><b>CLICK</b><small>Upgrade your clicks in Build</small></button>
+          <div class="tree-cols">${TREE_COLS.map(col => `<div class="tree-col">${col.map(([k]) => node(k, resOf(col[0][0]))).join('')}</div>`).join('')}</div>`;
+      }
       // Selo no canto de cada card: "Built: N" ou "Level N" (atualizado no renderHUD)
       Object.keys(UPGRADES_DEF).forEach(key => {
         const btn = document.getElementById(`btn-up-${key}`);
@@ -2583,7 +2654,7 @@
         const currentLvl = S.upgrades[key];
         if (currentLvl >= def.maxLvl) return;
         if (isLocked(key)) {
-          setTopAlert('error', 'LOCKED', `Upgrade ${UPGRADES_DEF[LOCKS[key][0]].title} to Lv ${LOCKS[key][1]} in the Click tab first!`);
+          setTopAlert('error', 'LOCKED', `Unlock ${UPGRADES_DEF[key].title} in the Tree tab first!`);
           playSound('alert');
           return;
         }
@@ -2602,11 +2673,6 @@
           setTopAlert('success', built ? 'BUILT' : 'UPGRADE COMPLETE', `Congratulations! ${def.title} has been ${built ? 'built' : 'upgraded'}!`);
           playSound('upgrade');
           spawnFloatingText(btn, built ? 'Built!' : 'Upgraded!', 'text-blue-400');
-          const opened = Object.keys(LOCKS).filter(k => LOCKS[k][0] === key && LOCKS[k][1] === S.upgrades[key] && !S.upgrades[k]);
-          if (opened.length) {
-            setTopAlert('success', 'UNLOCKED!', `${opened.map(k => UPGRADES_DEF[k].title).join(' + ')} can now be built!`);
-            sfx('chime');
-          }
           renderHUD();
         } else {
           setTopAlert('error', 'ERROR: SCIENCE', `You need ${cost} Science points! Click "Research".`);
@@ -2892,6 +2958,7 @@
             autoEnergy: 0, autoPop: 0, o2tech: 0, storage: 0,
             clickIce: 0, clickFood: 0, clickO2: 0, clickSolar: 0, clickSci: 0
           },
+          tree: {},
 
           activeEvent: null,
           eventTimer: 0,
@@ -3295,17 +3362,14 @@
             btnEl.textContent = locked ? 'Locked' : lvl >= def.maxLvl ? 'Complete' : (!isBuilt ? 'Build' : def.defaultBtnLabel);
             btnEl.closest('.res-card').classList.toggle('is-locked', locked);
           }
-          if (locked) {
-            const [ck, n] = LOCKS[key];
-            document.getElementById(`lock-txt-${key}`).innerHTML = `Upgrade <b>${UPGRADES_DEF[ck].title}</b><br>to Lv ${n} to unlock<br><small>(${S.upgrades[ck]}/${n})</small>`;
-          }
-          // Aba Click: próximo prédio que este nível destrava
+          // Aba Click: próximo nó da árvore que pede este nível
           const unl = document.getElementById(`unl-${key}`);
           if (unl) {
-            const next = Object.keys(LOCKS).filter(k => LOCKS[k][0] === key && lvl < LOCKS[k][1]).sort((a, b) => LOCKS[a][1] - LOCKS[b][1]);
-            unl.innerHTML = next.length ? `<i class="lock-ico"></i> Lv ${LOCKS[next[0]][1]} unlocks: <b>${next.filter(k => LOCKS[k][1] === LOCKS[next[0]][1]).map(k => UPGRADES_DEF[k].title).join(', ')}</b>` : '<span class="text-emerald-400">All buildings unlocked!</span>';
+            const next = Object.keys(TREE).find(k => TREE[k].click && TREE[k].click[0] === key && lvl < TREE[k].click[1]);
+            unl.innerHTML = next ? `<i class="lock-ico"></i> Lv ${TREE[next].click[1]} opens in the Tree: <b>${UPGRADES_DEF[next].title}</b>` : '<span class="text-emerald-400">Tree path open!</span>';
           }
         });
+        renderTree();
 
         if (window.refreshBuildingWindow) window.refreshBuildingWindow();
         // ● na sub-aba do Build quando dá para comprar algo nela
@@ -4087,6 +4151,7 @@
         document.querySelectorAll('[data-screen]').forEach(el => { el.hidden = el.dataset.screen !== 'acoes' && el.dataset.screen !== name; });
         document.getElementById('window-backdrop').hidden = name === 'acoes';
         if (name === 'dados') drawDataTab();
+        if (name === 'arvore') renderTree();
         // Encaixa a janela entre o header e as abas
         const win = document.querySelector(`.game-window[data-screen="${name}"]`);
         if (win) {
@@ -4165,6 +4230,7 @@
           '...##..##..##...', '...#...##...#...', '..##...##...##..', '..#....##....#..', '.##..........##.',
           '.#.....##.....#.', '##............##', '################'
         ],
+        tree: ['....###....', '....###....', '....###....', '.....#.....', '.#########.', '.#...#...#.', '.#...#...#.', '###.###.###', '###.###.###', '###.###.###'],
         star: ['.....#.....', '.....#.....', '....###....', '###########', '.#########.', '..#######..', '..#######..', '.####.####.', '.###...###.', '##.......##']
       };
       // Nome antigo (Material Symbols) -> desenho pixel art
