@@ -1908,7 +1908,7 @@
         playSound('click');
         document.getElementById('modal-gameover').classList.add('hidden');
         document.getElementById('retro-menu-screen').classList.remove('hidden');
-        selectMenuIndex(0);
+        refreshMenuContinue(); // mostra o CONTINUE do jogo que acabou de ser salvo
       };
 
       // -------------------------------------------------------------
@@ -1979,7 +1979,8 @@
       // Marte fica mais difícil o tempo todo: a tripulação gasta mais a cada segundo (x2 aos 7,5 min, x3 aos 15 min),
       // então a base nunca estabiliza: sempre é preciso construir mais
       function crewDrainMult() {
-        return getModeDrainMultiplier() * (1 + S.secondsAlive / 450) * (1 + (S.baseLevel - 1) * 0.15);
+        // x1.15 base e +15% por nível do Auto Clicker (o robô deixa o jogo mais fácil, então a tripulação gasta mais)
+        return getModeDrainMultiplier() * 1.15 * (1 + S.secondsAlive / 400) * (1 + (S.baseLevel - 1) * 0.15) * (1 + S.upgrades.autoClick * 0.15);
       }
 
       // Perda contínua causada por um evento ativo (ex.: vazamento de água, frio)
@@ -2512,7 +2513,7 @@
         clickO2:    { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Turbo Electrolyzer' },
         clickSolar: { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Panel Brush' },
         clickSci:   { baseCost: 10, maxLvl: Infinity, costMult: 1.35, defaultBtnLabel: 'Upgrade', title: 'Field Notebook' },
-        autoClick:  { baseCost: 100, maxLvl: Infinity, costMult: 1.8,  defaultBtnLabel: 'Upgrade', title: 'Auto Clicker' }
+        autoClick:  { baseCost: 150, maxLvl: Infinity, costMult: 2, defaultBtnLabel: 'Upgrade', title: 'Auto Clicker' }
       };
       // Ganho de cada clique: [melhoria, base, +por nível, recurso]
       const CLICK_UP = { ice: ['clickIce', 6, 2, 'Water'], food: ['clickFood', 6, 4, 'Food'], o2: ['clickO2', 8, 3, 'Oxygen'], solar: ['clickSolar', 10, 5, 'Energy'], sci: ['clickSci', 5, 3, 'Science'] };
@@ -2612,7 +2613,7 @@
         autoClick: ['smart_toy', '#ffd23f', 'A little robot helper clicks for you, always on what the base needs most!']
       };
       Object.values(CLICK_UP).forEach(([k, base, step, name]) => { UPGRADE_STATS[k] = l => `+${base + l * step} ${name} per click`; });
-      UPGRADE_STATS.autoClick = l => l ? `${(l * 0.5).toFixed(1)} auto clicks per second` : 'Off';
+      UPGRADE_STATS.autoClick = l => l ? `${(l * 0.5).toFixed(1)} auto clicks/s, crew uses +${l * 15}% supplies` : 'Off';
       document.querySelector('[data-screen="upgrades"] .grid').insertAdjacentHTML('afterbegin', Object.entries(CLICK_CARD).map(([k, [icon, color, txt]]) => `
         <div class="res-card res-click bg-surface-low border border-surface-border p-3 rounded-xl flex flex-col justify-between">
           <div class="build-art"><span class="material-symbols-outlined click-art" style="color:${color}">${icon}</span><span class="material-symbols-outlined click-hand">touch_app</span></div>
