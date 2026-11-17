@@ -11,7 +11,7 @@ O link antigo, `Orbit_Explorer_BETA.html`, continua funcionando e abre o mesmo j
 ## O que mudou depois da 1.0
 - **Prédios coloridos para as 13 estruturas:** a cada nível da base (2 a 5), a árvore abre uma fileira com os 13 prédios (azul, verde, roxo e dourado).
   - Cada nó da árvore **libera a versão colorida** daquela estrutura na aba **Build**.
-  - Cada card do Build tem a linha **"Versões coloridas"**: cada cor tem o seu botão, o seu preço e o seu contador.
+  - Cada cor liberada ganha o **seu próprio card no Build**, no mesmo padrão dos outros (imagem pintada com a cor, "Built", Now/Next, custo e botão Build), logo depois do card original.
   - **Preço:** quanto mais alta a cor, mais caro. A primeira compra custa o preço base × 4 (azul), × 12 (verde), × 35 (roxo) ou × 100 (dourado). Cada nova compra da mesma cor sobe ×1,3.
   - **Força:** cada prédio colorido vale **2 (azul), 3 (verde), 5 (roxo) ou 8 (dourado)** prédios normais. Ele produz mais, faz a tripulação gastar menos água ou oxigênio, faz o escudo gastar menos ou dá mais espaço, conforme a estrutura.
   - Os prédios coloridos aparecem no mapa com a sua cor.

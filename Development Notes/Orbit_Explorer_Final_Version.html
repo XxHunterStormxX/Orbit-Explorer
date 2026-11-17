@@ -76,8 +76,8 @@
     .res-crew   { --res: #c084fc; }
     .res-card { border-color: color-mix(in srgb, var(--res) 45%, transparent) !important; }
     .res-card .text-blue-400 { color: var(--res) !important; }
-    .res-card [id^="btn-up-"] { background-color: var(--res) !important; color: #0b0b12 !important; }
-    .res-card [id^="btn-up-"]:hover:not(:disabled) { filter: brightness(1.15); }
+    .res-card [id^="btn-up-"], .res-card [id^="btn-cb-"] { background-color: var(--res) !important; color: #0b0b12 !important; }
+    .res-card [id^="btn-up-"]:hover:not(:disabled), .res-card [id^="btn-cb-"]:hover:not(:disabled) { filter: brightness(1.15); }
     /* Tamanhos mínimos legíveis para crianças em alfabetização */
     .text-\[9px\], .text-\[10px\] { font-size: 13px !important; }
     .text-\[11px\], .text-xs { font-size: 14px !important; }
@@ -400,15 +400,6 @@
     .pop-over { color:#ff4d4d !important; animation: pop-blink .8s steps(2) infinite; }
     #hud-pop-box.pop-full { border-color: #ff4d4d !important; background: rgba(255, 77, 77, .18) !important; box-shadow: 0 0 0 2px rgba(255, 77, 77, .45); animation: pop-blink .8s steps(2) infinite; }
     @keyframes pop-blink { 50% { opacity:.35; } }
-    .color-builds { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.14); display: flex; flex-direction: column; gap: 4px; }
-    .cb-title { font-size: 10px; color: #a3a3a3; font-family: ui-monospace, monospace; text-transform: uppercase; }
-    .cb-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-    .cb-btn { position: relative; border: 2px solid var(--tier); background: color-mix(in srgb, var(--tier) 16%, #15111c); color: var(--tier); font-size: 10px; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; line-height: 1.2; font-family: ui-monospace, monospace; cursor: pointer; }
-    .cb-btn small { color: #e5e5e5; font-size: 10px; }
-    .cb-btn i { position: absolute; top: -7px; right: -5px; background: var(--tier); color: #000; font-size: 9px; font-style: normal; font-weight: 700; padding: 0 3px; }
-    .cb-btn i:empty { display: none; }
-    .cb-btn:disabled { opacity: .45; cursor: not-allowed; }
-    .cb-btn.locked { border-color: #4b4458; color: #8a8199; background: #1d1726; }
     .tree-tier { margin-top: 28px; padding: 6px 14px; border: 3px solid var(--tier); background: color-mix(in srgb, var(--tier) 18%, #1d1726); color: var(--tier); font-size: 14px; display: flex; align-items: center; gap: 6px; }
     .tree-tier.locked { border-color: #4b4458; color: #8a8199; background: #1d1726; }
     .tier-cols { margin-top: 0; }
@@ -2212,6 +2203,7 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['Colored version: each one counts as # normal ones!', 'Versão colorida: cada uma vale # normais!', 'Versión de color: ¡cada una vale # normales!'],
         ['Colored versions', 'Versões coloridas', 'Versiones de color'], ['Each one counts as 2, 3, 5 or 8 normal ones.', 'Cada uma vale 2, 3, 5 ou 8 normais.', 'Cada una vale 2, 3, 5 u 8 normales.'],
         ['Unlock this color in the Tree tab first!', 'Desbloqueie essa cor na aba Árvore primeiro!', '¡Desbloquea este color en la pestaña Árbol primero!'],
         ['@ got a new color and is stronger now!', '@ ganhou uma cor nova e ficou mais forte!', '¡@ tiene un color nuevo y ahora es más fuerte!'], ['+250 space', '+250 espaço', '+250 espacio'], ['+5 crew', '+5 vagas', '+5 plazas'],
@@ -3499,18 +3491,24 @@
         spawnFloatingText((e && e.currentTarget) || document.getElementById(`cb-${k}-${t}`), 'Built!', 'text-blue-400');
         renderHUD();
       };
-      // Linha "Colored versions" no card de cada uma das 13 estruturas (aba Build)
-      Object.values(TYPE_KEY).forEach(k => document.getElementById(`btn-up-${k}`).closest('.res-card').insertAdjacentHTML('beforeend', `<div class="color-builds">
-          <span class="cb-title">Colored versions</span>
-          <div class="cb-row">${[2, 3, 4, 5].map(t => `<button class="cb-btn" id="cb-${k}-${t}" style="--tier:${TIER_COLORS[t]}" onclick="buyColor('${k}', ${t}, event)" type="button"><i id="cbn-${k}-${t}"></i><b>${TIER_NAMES[t]}</b><small id="cbc-${k}-${t}"></small></button>`).join('')}</div>
-          <span class="cb-title">Each one counts as 2, 3, 5 or 8 normal ones.</span></div>`));
+      // Cards coloridos da aba Build (criados junto com a arte dos cards): aparecem quando a cor é liberada na Árvore
       function renderColorBuilds() {
         Object.values(TYPE_KEY).forEach(k => [2, 3, 4, 5].forEach(t => {
-          const b = document.getElementById(`cb-${k}-${t}`), open = !!S.tree[tierKey(k, t)], n = cbN(k, t), cost = colorCost(k, t);
-          b.classList.toggle('locked', !open);
-          b.disabled = open && S.science < cost;
-          setText(document.getElementById(`cbc-${k}-${t}`), open ? cost : '🔒');
-          setText(document.getElementById(`cbn-${k}-${t}`), n ? `x${n}` : '');
+          const card = document.getElementById(`cbcard-${k}-${t}`);
+          if (!card) return;
+          const open = !!S.tree[tierKey(k, t)];
+          card.style.display = open ? '' : 'none';
+          const n = cbN(k, t), cost = colorCost(k, t), btn = document.getElementById(`btn-cb-${k}-${t}`);
+          btn.disabled = true; // escondido: não conta no aviso de compra da aba
+          if (!open) return;
+          const img = card.querySelector('.build-art img');
+          if (!img.dataset.t && img.complete && img.naturalWidth) { img.dataset.t = 1; img.src = tintURL(img, t, k); }
+          setText(document.getElementById(`lvl-cb-${k}-${t}`), `Built: ${n}`);
+          setText(document.getElementById(`cost-cb-${k}-${t}`), `Cost: ${cost} Science`);
+          setText(btn, 'Build');
+          btn.disabled = S.science < cost;
+          const l = S.upgrades[k] + (k === 'storage' ? colorPower(k) : 0);
+          setHTML(document.getElementById(`next-cb-${k}-${t}`), `Now: ${UPGRADE_STATS[k](l)}<br><span class="text-emerald-400">Next: ${UPGRADE_STATS[k](l + TIER_POWER[t])}</span>`);
         }));
       }
       const baseTier = () => Math.min(5, S.baseLevel);
@@ -4400,7 +4398,7 @@
         if (window.refreshBuildingWindow) window.refreshBuildingWindow();
         // ● na sub-aba do Build quando dá para comprar algo nela
         document.querySelectorAll('.build-tab').forEach(t => {
-          t.querySelector('.build-dot').classList.toggle('hidden', ![...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat} [id^="btn-up-"]`)].some(b => !b.disabled));
+          t.querySelector('.build-dot').classList.toggle('hidden', ![...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat} [id^="btn-up-"], [data-screen="upgrades"] .res-card.${t.dataset.cat} [id^="btn-cb-"]`)].some(b => !b.disabled));
           t.classList.toggle('tab-locked', [...document.querySelectorAll(`[data-screen="upgrades"] .res-card.${t.dataset.cat}`)].every(c => c.classList.contains('is-locked')));
         });
 
@@ -5324,6 +5322,27 @@
           // Fato real da NASA + estudo do NTRS em que o prédio se baseia
           const nf = NASA_FACTS[key];
           if (nf) card.querySelector('.up-next').insertAdjacentHTML('afterend', `<p class="nasa-fact"><b>NASA fact:</b> ${nf.fact}${nf.paper ? `<br><a href="${NTRS(nf.paper[0])}" target="_blank" rel="noopener noreferrer">Based on NASA research →</a>` : ''}</p>`);
+        });
+        // Versões coloridas: um card igual ao original para cada cor, logo depois dele
+        Object.values(TYPE_KEY).forEach(k => {
+          const orig = document.getElementById(`btn-up-${k}`).closest('.res-card');
+          let prev = orig;
+          [2, 3, 4, 5].forEach(t => {
+            const c = orig.cloneNode(true);
+            c.id = `cbcard-${k}-${t}`;
+            c.classList.remove('is-locked');
+            c.style.borderColor = TIER_COLORS[t];
+            c.style.display = 'none';
+            const src = orig.querySelector('.build-art img, .tier-strip img').src;
+            c.querySelector('.build-art, .tier-strip').outerHTML = `<div class="build-art"><img alt="" src="${src}"></div>`;
+            c.querySelectorAll('.nasa-fact').forEach(e => e.remove());
+            c.querySelector('span.font-bold').insertAdjacentHTML('beforeend', ` <b style="color:${TIER_COLORS[t]}">${TIER_NAMES[t]}</b>`);
+            c.querySelector('p').textContent = `Colored version: each one counts as ${TIER_POWER[t]} normal ones!`;
+            [['cost', 'cost'], ['btn', 'btn'], ['lvl', 'lvl'], ['next', 'next']].forEach(([a, b]) => { const e = c.querySelector(`#${a}-up-${k}`); if (e) e.id = `${b}-cb-${k}-${t}`; });
+            c.querySelector(`#btn-cb-${k}-${t}`).setAttribute('onclick', `buyColor('${k}', ${t}, event)`);
+            prev.after(c);
+            prev = c;
+          });
         });
         renderHUD();
         terrain.onload = draw;
