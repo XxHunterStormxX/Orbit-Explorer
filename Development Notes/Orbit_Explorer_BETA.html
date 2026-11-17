@@ -2525,7 +2525,7 @@
 
       // ---- Ranking online (Firebase Firestore pela API REST, sem biblioteca extra) ----
       // Vazio = só o ranking deste aparelho. As regras do servidor (firestore.rules) validam tudo que chega.
-      const ONLINE = { apiKey: '', projectId: '' };
+      const ONLINE = { apiKey: 'AIzaSyC__ZCtDRRV11wIWxf1EqjcJ7qVGM7E-sY', projectId: 'orbit-explorer-56f4e' };
       const fsInt = v => ({ integerValue: String(Math.round(v)) });
       function fsFetch(path, body, method = 'POST') {
         const ctl = new AbortController();
@@ -2589,7 +2589,7 @@
       };
       window.confirmNickname = function() {
         const inp = document.getElementById('nick-input'), raw = inp.value;
-        const v = raw.toUpperCase().replace(/[^A-Z0-9ÀÁÂÃÇÉÊÍÓÔÕÚÜÑ _-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
+        const v = raw.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9 _-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 12);
         const bad = nickBad(raw) || nickBad(v);
         document.getElementById('nick-msg').classList.toggle('hidden', !bad);
         if (!v || bad) { playSound('alert'); inp.focus(); return; }
