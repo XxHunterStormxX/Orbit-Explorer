@@ -176,10 +176,11 @@
     .build-tab:hover { border-color: var(--res); }
     .build-tab.on { background: color-mix(in srgb, var(--res) 22%, #211a1d); border-color: var(--res); color: #fff; }
     .build-dot { color: var(--res); font-size: 12px; }
-    #rad-alert { animation: rad-blink .8s steps(2) infinite; }
+    #rad-alert, #crew-alert { animation: rad-blink .8s steps(2) infinite; }
+    .crew-alert-icon, .crew-alert-text { color: #ff4d4d !important; }
     @keyframes rad-blink { 50% { opacity: .35; } }
     .rad-alert-icon { font-size: 44px !important; color: #6bfa05; }
-    .rad-alert-text { font-family: 'Press Start 2P', monospace; font-size: 20px; color: #6bfa05; text-shadow: 3px 3px 0 #000; }
+    .rad-alert-text { font-family: 'Press Start 2P', monospace; font-size: 20px; white-space: nowrap; color: #6bfa05; text-shadow: 3px 3px 0 #000; }
     /* Botão do escudo: interruptor de painel (diferente dos cards de coleta) */
     .shield-btn { display: flex; align-items: center; gap: 10px; padding: 5px 12px;
       font-weight: 700; color: #9fb3c8; background: #14181f; border: 3px solid #3b4a5a;
@@ -397,6 +398,7 @@
     .click-card.tap { animation:auto-press .3s ease-out; }
     @keyframes auto-press { 40% { transform:scale(.96); box-shadow:0 0 0 3px #ffd23f; } }
     .pop-over { color:#ff4d4d !important; animation: pop-blink .8s steps(2) infinite; }
+    #hud-pop-box.pop-full { border-color: #ff4d4d !important; background: rgba(255, 77, 77, .18) !important; box-shadow: 0 0 0 2px rgba(255, 77, 77, .45); animation: pop-blink .8s steps(2) infinite; }
     @keyframes pop-blink { 50% { opacity:.35; } }
     .tree-node.done { background:color-mix(in srgb, var(--res) 18%, #1d1726); }
     .tree-node.ready { animation: tree-pulse 1.4s ease-in-out infinite; cursor:pointer; }
@@ -448,6 +450,12 @@
   </div>
 
   <!-- AVISO DE RADIAÇÃO ALTA (acima de 75): símbolo nuclear + texto piscando no topo do mapa -->
+  <!-- AVISO DE BASE LOTADA: aparece quando os astronautas enchem todas as vagas -->
+  <div class="hidden fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3" id="crew-alert">
+    <span class="material-symbols-outlined rad-alert-icon crew-alert-icon">group</span>
+    <span class="rad-alert-text crew-alert-text" id="crew-alert-text">BASE FULL</span>
+    <span class="material-symbols-outlined rad-alert-icon crew-alert-icon">group</span>
+  </div>
   <div class="hidden fixed left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-3" id="rad-alert">
     <span class="material-symbols-outlined rad-alert-icon">radiology</span>
     <span class="rad-alert-text">HIGH RADIATION</span>
@@ -622,7 +630,7 @@
           </div>
           <span class="text-base w-12 text-right"><span class="font-bold text-[#05fa5b]" id="hud-health-pct">100%</span></span>
         </div>
-        <div class="bg-surface-low border border-surface-border px-3 py-2 rounded-xl flex items-center gap-1.5 text-sm">
+        <div class="bg-surface-low border border-surface-border px-3 py-2 rounded-xl flex items-center gap-1.5 text-sm" id="hud-pop-box">
           <span class="material-symbols-outlined text-purple text-[20px]">group</span>
           <span class="font-bold text-white"><span id="hud-pop">2</span>/<span id="hud-pop-cap">5</span></span>
           <span class="hidden md:inline-block ml-1 text-[10px] px-2 py-0.5 bg-amber/15 text-amber border border-amber/40" id="colony-stage-label">OUTPOST • LEVEL 1</span>
@@ -798,8 +806,8 @@
         <!-- AÇÃO 1: MINERAR GELO -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-cyan/40 hover:border-cyan rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-ice" onclick="actionMineIce(event)" type="button">
           <div class="flex items-start justify-between w-full">
-            <div class="w-10 h-10 rounded-xl bg-cyan/15 text-cyan flex items-center justify-center group-hover:scale-110 transition">
-              <span class="material-symbols-outlined text-[22px]">ac_unit</span>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-cyan/15 text-cyan flex items-center justify-center group-hover:scale-110 transition">
+              <span class="material-symbols-outlined text-[34px] sm:text-[40px]">ac_unit</span>
             </div>
             <div class="flex items-center gap-1">
               <span class="hidden sm:inline font-mono-code text-[10px] text-neutral-400 bg-surface-high px-1.5 py-0.5 rounded">[1]</span>
@@ -817,8 +825,8 @@
         <!-- AÇÃO 2: COLHER ESTUFA -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-[#bf8c15]/50 hover:border-[#bf8c15] rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-greenhouse" onclick="actionHarvestFood(event)" type="button">
           <div class="flex items-start justify-between w-full">
-            <div class="w-10 h-10 rounded-xl bg-[#bf8c15]/20 text-[#bf8c15] flex items-center justify-center group-hover:scale-110 transition">
-              <span class="material-symbols-outlined text-[22px]">psychiatry</span>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#bf8c15]/20 text-[#bf8c15] flex items-center justify-center group-hover:scale-110 transition">
+              <span class="material-symbols-outlined text-[34px] sm:text-[40px]">psychiatry</span>
             </div>
             <div class="flex items-center gap-1">
               <span class="hidden sm:inline font-mono-code text-[10px] text-neutral-400 bg-surface-high px-1.5 py-0.5 rounded">[2]</span>
@@ -836,8 +844,8 @@
         <!-- AÇÃO 3: ELETRÓLISE (ÁGUA -> O2) -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-emerald-400/40 hover:border-emerald-400 rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-o2" onclick="actionElectrolysis(event)" type="button">
           <div class="flex items-start justify-between w-full">
-            <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition">
-              <span class="material-symbols-outlined text-[22px]">air</span>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition">
+              <span class="material-symbols-outlined text-[34px] sm:text-[40px]">air</span>
             </div>
             <div class="flex items-center gap-1">
               <span class="hidden sm:inline font-mono-code text-[10px] text-neutral-400 bg-surface-high px-1.5 py-0.5 rounded">[3]</span>
@@ -855,8 +863,8 @@
         <!-- AÇÃO 4: COLETAR SOLAR -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-[#4f889e]/50 hover:border-[#4f889e] rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-solar" onclick="actionCollectSolar(event)" type="button">
           <div class="flex items-start justify-between w-full">
-            <div class="w-10 h-10 rounded-xl bg-[#4f889e]/20 text-[#4f889e] flex items-center justify-center group-hover:scale-110 transition">
-              <span class="material-symbols-outlined text-[22px]">solar_power</span>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#4f889e]/20 text-[#4f889e] flex items-center justify-center group-hover:scale-110 transition">
+              <span class="material-symbols-outlined text-[34px] sm:text-[40px]">solar_power</span>
             </div>
             <div class="flex items-center gap-1">
               <span class="hidden sm:inline font-mono-code text-[10px] text-neutral-400 bg-surface-high px-1.5 py-0.5 rounded">[4]</span>
@@ -874,8 +882,8 @@
         <!-- AÇÃO 5: CONDUZIR EXPERIMENTO CIENTÍFICO -->
         <button class="click-card relative overflow-hidden bg-surface-card hover:bg-[#2e242a] active:bg-[#382b33] disabled:opacity-45 disabled:cursor-not-allowed border border-[#a405fa]/60 hover:border-[#a405fa] rounded-2xl p-3 sm:p-4 text-left transition shadow-md flex flex-col justify-between group" id="btn-click-experiment" onclick="actionResearchExp(event)" type="button">
           <div class="flex items-start justify-between w-full">
-            <div class="w-10 h-10 rounded-xl bg-[#a405fa]/20 text-[#a405fa] flex items-center justify-center group-hover:scale-110 transition">
-              <span class="material-symbols-outlined text-[22px]">biotech</span>
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#a405fa]/20 text-[#a405fa] flex items-center justify-center group-hover:scale-110 transition">
+              <span class="material-symbols-outlined text-[34px] sm:text-[40px]">biotech</span>
             </div>
             <div class="flex items-center gap-1">
               <span class="hidden sm:inline font-mono-code text-[10px] text-neutral-400 bg-surface-high px-1.5 py-0.5 rounded">[5]</span>
@@ -2186,6 +2194,7 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['BASE FULL', 'BASE LOTADA', 'BASE LLENA'], ['OVERCROWDED!', 'SUPERLOTADA!', '¡SUPERPOBLADA!'],
         ['NICKNAME', 'APELIDO', 'APODO'], ['TIME', 'TEMPO', 'TIEMPO'],
         ['Loading world ranking…', 'Carregando o ranking mundial…', 'Cargando el ranking mundial…'],
         ['World ranking: everyone who plays, on any device.', 'Ranking mundial: todo mundo que joga, em qualquer aparelho.', 'Ranking mundial: todos los que juegan, en cualquier dispositivo.'],
@@ -4052,6 +4061,7 @@
         setText(document.getElementById('hud-pop'), S.population);
         setText(document.getElementById('hud-pop-cap'), fmtCap(S.capPop));
         document.getElementById('hud-pop').parentElement.classList.toggle('pop-over', overcrowd() > 0);
+        document.getElementById('hud-pop-box').classList.toggle('pop-full', S.population >= S.capPop);
         setText(document.getElementById('label-pop-ratio'), `${S.population} / ${fmtCap(S.capPop)} Astronauts`);
         setText(document.getElementById('hud-health-pct'), `${Math.round(S.health)}%`);
 
@@ -4123,6 +4133,10 @@
         const radAlert = document.getElementById('rad-alert');
         radAlert.classList.toggle('hidden', inMenu || S.radiation < 75);
         radAlert.style.top = `${document.querySelector('header').getBoundingClientRect().bottom + 14}px`;
+        const crewAlert = document.getElementById('crew-alert');
+        crewAlert.classList.toggle('hidden', inMenu || S.isGameOver || S.population < S.capPop);
+        setText(document.getElementById('crew-alert-text'), overcrowd() ? 'OVERCROWDED!' : 'BASE FULL');
+        crewAlert.style.top = `${parseFloat(radAlert.style.top) + (radAlert.classList.contains('hidden') ? 0 : radAlert.offsetHeight + 10)}px`;
         document.getElementById('bar-rad').style.width = `${Math.min(100, S.radiation)}%`;
 
         setText(document.getElementById('val-sci'), Math.round(S.science));
@@ -5270,11 +5284,11 @@
         satellite: ['.....#.....', '.....#.....', '....###....', '###.###.###', '###########', '###.###.###', '....###....', '....#.#....'],
         robot: ['.....#.....', '.....#.....', '..#######..', '.##.###.##.', '.#########.', '.##.....##.', '.#########.', '....###....', '..#######..', '..#.###.#..', '..#.###.#..'],
         apple: ['.....#.##..', '.....##....', '..##.#.##..', '.#########.', '###########', '###########', '###########', '###########', '.#########.', '..###.###..'],
-        radiation: [ // trevo nuclear ☢
-          '.###.......###.', '#####.....#####', '######...######', '.######.######.', '..####...####..',
-          '...##.....##...', '......###......', '.....#####.....', '......###......', '...............',
-          '.....#####.....', '....#######....', '...#########...', '..###########..', '...#########...'
-        ],
+        radiation: Array.from({ length: 19 }, (_, y) => Array.from({ length: 19 }, (_, x) => { // trevo nuclear ☢ dentro de um círculo
+          const dx = x - 9, dy = y - 9, r = Math.hypot(dx, dy), a = Math.atan2(dy, dx) * 180 / Math.PI;
+          const blade = [-150, -30, 90].some(c => Math.abs(((a - c + 540) % 360) - 180) <= 30);
+          return (r >= 7.9 && r <= 9.2) || r <= 1.7 || (r >= 3.1 && r <= 6.6 && blade) ? '#' : '.';
+        }).join('')),
         expand_more: ['##.....##', '###...###', '.###.###.', '..#####..', '...###...', '....#....'],
         pause: ['###.###', '###.###', '###.###', '###.###', '###.###', '###.###', '###.###', '###.###', '###.###'],
         play_arrow: ['##.......', '####.....', '######...', '########.', '#########', '########.', '######...', '####.....', '##.......'],
