@@ -240,6 +240,9 @@
     .rank-time { color: #05fa5b; }
     .rank-nick { display: block; color: #fff; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .rank-sub { display: block; color: #9aa3c7; font-size: 11px; line-height: 1.25; }
+    .rank-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .rank-pop { display: flex; align-items: center; gap: 3px; color: #c084fc; font-family: 'Press Start 2P', monospace; font-size: 10px; }
+    .rank-pop .material-symbols-outlined { font-size: 14px; }
     /* Tutorial do menu */
     .tut-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
     .tut-tabs button { flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border: 2px solid #43363d; background: #1d1726; color: #cbd5e1; font-size: 13px; }
@@ -516,7 +519,7 @@
         <h2 class="font-pixel text-xs text-amber">RANKING</h2>
       </div>
       <p class="rank-note" id="rank-note"></p>
-      <div class="rank-head"><span>#</span><span>NICKNAME</span><span>TIME</span></div>
+      <div class="rank-head"><span>#</span><span>NICKNAME</span><span>TIME · CREW</span></div>
       <ol class="rank-list" id="rank-list"></ol>
     </aside>
 
@@ -2203,6 +2206,7 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['TIME · CREW', 'TEMPO · EQUIPE', 'TIEMPO · EQUIPO'], ['Astronauts', 'Astronautas', 'Astronautas'],
         ['Colored version: each one counts as # normal ones!', 'Versão colorida: cada uma vale # normais!', 'Versión de color: ¡cada una vale # normales!'],
         ['Colored versions', 'Versões coloridas', 'Versiones de color'], ['Each one counts as 2, 3, 5 or 8 normal ones.', 'Cada uma vale 2, 3, 5 ou 8 normais.', 'Cada una vale 2, 3, 5 u 8 normales.'],
         ['Unlock this color in the Tree tab first!', 'Desbloqueie essa cor na aba Árvore primeiro!', '¡Desbloquea este color en la pestaña Árbol primero!'],
@@ -2591,7 +2595,7 @@
           <li class="rank-row${r.nick.toLowerCase() === me ? ' me' : ''}">
             <span class="rank-pos">${i + 1}</span>
             <span class="min-w-0"><b class="rank-nick">${esc(r.nick)}</b><span class="rank-sub"><span>${baseName(r.base)}</span> · <span>${DIFF_NAME[r.diff] || ''}</span></span></span>
-            <span class="rank-time">${fmtTime(r.time)}</span>
+            <span class="rank-right"><span class="rank-time">${fmtTime(r.time)}</span><span class="rank-pop" title="Astronauts"><span class="material-symbols-outlined">group</span>${r.pop || 0}</span></span>
           </li>`).join('') : '<p class="text-neutral-400 text-sm">No missions yet. Play to enter the ranking!</p>';
       }
       window.refreshRanking = function() {
@@ -2811,8 +2815,15 @@
       const BASE_NAMES = ['OUTPOST', 'SETTLEMENT', 'COLONY', 'CITY', 'METROPOLIS'];
       const baseName = l => BASE_NAMES[Math.min(l, BASE_NAMES.length) - 1];
       const baseCost = l => Math.round(600 * Math.pow(3, l - 1));
-      const baseReq = l => ({ autoIce: 3 * l, autoFood: 3 * l, autoO2: 3 * l, autoEnergy: 2 * l - 1, autoSci: l, habitat: l - 1 });
-      const baseReady = l => Object.entries(baseReq(l)).every(([k, n]) => S.upgrades[k] >= n);
+      // Do nível 2 em diante também pede prédios coloridos da cor daquele nível ("autoIce@2" = Ice Drill azul)
+      const baseReq = l => {
+        const r = { autoIce: 4 * l, autoFood: 4 * l, autoO2: 4 * l, autoEnergy: 3 * l - 1, autoSci: 2 * l, habitat: l };
+        if (l >= 2) ['autoIce', 'autoFood', 'autoO2', 'autoEnergy', 'autoSci'].forEach(k => { r[`${k}@${l}`] = Math.min(l - 1, 2); });
+        return r;
+      };
+      const reqHave = k => k.includes('@') ? cbN(...k.split('@')) : S.upgrades[k];
+      const reqName = k => k.includes('@') ? `${UPGRADES_DEF[k.split('@')[0]].title} ${TIER_NAMES[k.split('@')[1]]}` : UPGRADES_DEF[k].title;
+      const baseReady = l => Object.entries(baseReq(l)).every(([k, n]) => reqHave(k) >= n);
       function prodMult() { return 1 + (S.baseLevel - 1) * 0.25; }
       const r1 = v => Math.round(v * 10) / 10;
 
@@ -2820,8 +2831,8 @@
       function renderBaseCard() {
         const l = S.baseLevel, cost = baseCost(l), canBuy = baseReady(l) && S.science >= cost;
         const rows = Object.entries(baseReq(l)).filter(([, n]) => n > 0).map(([k, n]) => {
-          const have = S.upgrades[k], done = have >= n;
-          return `<li class="flex justify-between gap-2"><span>${done ? '✔' : '✘'} ${UPGRADES_DEF[k].title}</span><span class="font-bold ${done ? 'text-emerald-400' : 'text-rose-400'}">${Math.min(have, n)} / ${n}</span></li>`;
+          const have = reqHave(k), done = have >= n;
+          return `<li class="flex justify-between gap-2"><span>${done ? '✔' : '✘'} ${reqName(k)}</span><span class="font-bold ${done ? 'text-emerald-400' : 'text-rose-400'}">${Math.min(have, n)} / ${n}</span></li>`;
         }).join('');
         const html = `
           <div class="flex items-center justify-between"><span class="font-bold text-white text-base">Command Center</span><span class="font-bold text-sm text-neutral-300">Level ${l} • ${baseName(l)}</span></div>
@@ -3465,12 +3476,12 @@
       const tierKey = (k, t) => `tier_${k}_${t}`;
       const KEY_TYPE = Object.fromEntries(Object.entries(TYPE_KEY).map(([t, k]) => [k, t]));
       // Prédios coloridos: cada cor vale mais que um prédio normal e tem o seu próprio preço,
-      // que começa em (preço base x TIER_PRICE) e sobe x1.3 a cada compra da mesma cor
+      // que começa em (preço base x TIER_PRICE) e sobe x1.4 a cada compra da mesma cor
       const TIER_POWER = [0, 1, 2, 3, 5, 8];
-      const TIER_PRICE = [0, 1, 4, 12, 35, 100];
+      const TIER_PRICE = [0, 1, 8, 25, 80, 250];
       const cbN = (k, t) => (S.cbld || {})[`${k}@${t}`] || 0;
       const colorPower = k => [2, 3, 4, 5].reduce((s, t) => s + cbN(k, t) * TIER_POWER[t], 0);
-      const colorCost = (k, t) => Math.round(UPGRADES_DEF[k].baseCost * TIER_PRICE[t] * Math.pow(1.3, cbN(k, t)));
+      const colorCost = (k, t) => Math.round(UPGRADES_DEF[k].baseCost * TIER_PRICE[t] * Math.pow(1.4, cbN(k, t)));
       const lvlE = k => S.upgrades[k] + colorPower(k);  // melhorias: nível do card + prédios coloridos
       const bldProd = k => bldPower(k) + colorPower(k); // prédios: cópias + níveis + prédios coloridos
       const bldMult = () => prodMult();
@@ -3497,16 +3508,14 @@
           const card = document.getElementById(`cbcard-${k}-${t}`);
           if (!card) return;
           const open = !!S.tree[tierKey(k, t)];
-          card.style.display = open ? '' : 'none';
+          card.classList.toggle('is-locked', !open);
           const n = cbN(k, t), cost = colorCost(k, t), btn = document.getElementById(`btn-cb-${k}-${t}`);
-          btn.disabled = true; // escondido: não conta no aviso de compra da aba
-          if (!open) return;
           const img = card.querySelector('.build-art img');
           if (!img.dataset.t && img.complete && img.naturalWidth) { img.dataset.t = 1; img.src = tintURL(img, t, k); }
           setText(document.getElementById(`lvl-cb-${k}-${t}`), `Built: ${n}`);
           setText(document.getElementById(`cost-cb-${k}-${t}`), `Cost: ${cost} Science`);
-          setText(btn, 'Build');
-          btn.disabled = S.science < cost;
+          setText(btn, open ? 'Build' : 'Locked');
+          btn.disabled = !open || S.science < cost;
           const l = S.upgrades[k] + (k === 'storage' ? colorPower(k) : 0);
           setHTML(document.getElementById(`next-cb-${k}-${t}`), `Now: ${UPGRADE_STATS[k](l)}<br><span class="text-emerald-400">Next: ${UPGRADE_STATS[k](l + TIER_POWER[t])}</span>`);
         }));
@@ -5332,7 +5341,6 @@
             c.id = `cbcard-${k}-${t}`;
             c.classList.remove('is-locked');
             c.style.borderColor = TIER_COLORS[t];
-            c.style.display = 'none';
             const src = orig.querySelector('.build-art img, .tier-strip img').src;
             c.querySelector('.build-art, .tier-strip').outerHTML = `<div class="build-art"><img alt="" src="${src}"></div>`;
             c.querySelectorAll('.nasa-fact').forEach(e => e.remove());
