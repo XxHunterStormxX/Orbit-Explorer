@@ -197,7 +197,7 @@
     @keyframes shield-stripes { to { background-position: 22.6px 0; } }
     /* ===== ABERTURA ===== */
     .intro-text { position: absolute; z-index: 2; left: 0; right: 0; top: 24%; text-align: center; padding: 0 16px; opacity: 0; transition: opacity .6s; pointer-events: none; }
-    #intro.playing .intro-t1 { animation: intro-fade 2.6s .6s both; }
+    #intro.playing .intro-t1 { animation: intro-fade 2.8s 3.4s both; }
     .intro-start { position: absolute; z-index: 2; left: 0; right: 0; top: 40%; text-align: center; font-family: 'Press Start 2P', monospace;
       font-size: clamp(16px, 3vw, 24px); color: #ffd000; text-shadow: 0 3px 0 #d95b00; animation: start-blink 1s steps(2) infinite; }
     @keyframes start-blink { 50% { opacity: 0; } }
@@ -210,26 +210,8 @@
     .intro-big { font-family: 'Press Start 2P', monospace; font-size: clamp(18px, 4.5vw, 40px); line-height: 1.5; color: #ffd000; text-shadow: 0 4px 0 #d95b00; }
     .intro-small { margin-top: 18px; font-family: 'Press Start 2P', monospace; font-size: clamp(10px, 1.6vw, 14px); color: #7bd0ff; letter-spacing: .2em; }
     .intro-mid { font-size: clamp(18px, 3vw, 28px); font-weight: 700; color: #fff; line-height: 1.5; }
-    .intro-rocket { position: absolute; left: 50%; bottom: calc(22% + 30px); transform: translateX(-50%); }
-    .intro-pad { position: absolute; left: 50%; bottom: 22%; width: 150px; transform: translate(-50%, 30%); image-rendering: pixelated; }
-    #intro.playing .intro-pad { animation: pad-sink 3s .4s ease-in both; }
-    @keyframes pad-sink { to { transform: translate(-50%, calc(30% + 100vh)); } }
-    #intro:not(.playing) .intro-flame { display: none; }
-    #intro.playing .intro-rocket { animation: rocket-launch 3s .4s ease-in both; }
-    .intro-rocket img { width: 102px; image-rendering: pixelated; display: block; }
-    .intro-flame { position: absolute; top: calc(100% - 4px); left: 50%; margin-left: -15px; width: 30px; height: 46px; background: linear-gradient(#ffe07a, #ff7a1a 60%, transparent);
-      clip-path: polygon(0 0, 100% 0, 70% 100%, 50% 70%, 30% 100%); animation: flame-flicker .1s steps(2) infinite; }
-    @keyframes flame-flicker { 50% { transform: scaleY(.75); } }
-    @keyframes rocket-launch {
-      0% { transform: translate(-50%, 0); } 6% { transform: translate(calc(-50% - 3px), 0); } 12% { transform: translate(calc(-50% + 3px), 0); }
-      18% { transform: translate(-50%, 0); } 100% { transform: translate(-50%, -130vh); }
-    }
-    .intro-smoke { position: absolute; left: 50%; bottom: calc(22% + 20px); width: 0; }
-    .intro-smoke span { position: absolute; bottom: 0; width: 26px; height: 26px; background: rgba(200, 190, 195, .55); opacity: 0; }
-    #intro.playing .intro-smoke span { animation: smoke-puff 1.6s .6s ease-out both; }
-    .intro-smoke span:nth-child(1) { --dx: -90px; } .intro-smoke span:nth-child(2) { --dx: -45px; }
-    .intro-smoke span:nth-child(3) { --dx: 45px; } .intro-smoke span:nth-child(4) { --dx: 90px; }
-    @keyframes smoke-puff { 0% { opacity: .8; transform: translate(-13px, 0) scale(.4); } 100% { opacity: 0; transform: translate(calc(var(--dx) - 13px), -30px) scale(2.2); } }
+    /* Cena da abertura (base de lançamento, foguete, fumaça e nuvens) desenhada em pixel art no canvas */
+    #intro-cv { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
     .intro-skip { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 12px; color: #6b6470; }
     #intro.intro-out { opacity: 0; transition: opacity .6s; pointer-events: none; }
     /* Menu esperando a abertura terminar; depois o nome cresce e os botões entram um por um */
@@ -430,12 +412,7 @@
     <div class="intro-text intro-t2">
       <p class="intro-mid">A game developed by a team<br>of non-programmers</p>
     </div>
-    <img alt="" class="intro-pad" id="intro-pad-img">
-    <div class="intro-smoke"><span></span><span></span><span></span><span></span></div>
-    <div class="intro-rocket">
-      <img alt="" id="intro-rocket-img">
-      <div class="intro-flame"></div>
-    </div>
+    <canvas id="intro-cv"></canvas>
     <p class="intro-skip">Click or press any key to skip</p>
   </div>
 
@@ -2391,10 +2368,12 @@
         playLaunchSfx();
         launchAt = performance.now();
         document.getElementById('intro').classList.add('playing');
+        // 0–0,9 s ignição | 0,9–3,5 s decolagem pelo céu e nuvens | depois espaço: textos e o foguete sai rumo a Marte
         introTimers = [
-          setTimeout(() => sfx('sparkle'), 900),                                                      // NASA Space Apps aparece
-          setTimeout(() => { document.getElementById('intro').classList.add('step2'); sfx('chime'); }, 3400), // equipe
-          setTimeout(() => finishIntro(), 6400)
+          setTimeout(() => sfx('rocketUp'), 900),                                                     // decolagem
+          setTimeout(() => sfx('sparkle'), 3700),                                                     // NASA Space Apps aparece
+          setTimeout(() => { document.getElementById('intro').classList.add('step2'); sfx('chime'); }, 6400), // equipe
+          setTimeout(() => finishIntro(), 9200)
         ];
       };
       window.finishIntro = function() {
@@ -3689,7 +3668,8 @@
 
           // Abertura: a Terra é o chão (horizonte em 78% da tela) e afunda enquanto o foguete sobe;
           // Marte começa pequeno (o destino) e cresce até o tamanho do menu
-          const k = launchDone ? 1 : launchAt === null ? 0 : Math.min(1, Math.max(0, (performance.now() - launchAt - 400) / 3000));
+          // (a cena da base cobre a tela até ~2,4 s; depois o céu some e a Terra aparece afundando)
+          const k = launchDone ? 1 : launchAt === null ? 0 : Math.min(1, Math.max(0, (performance.now() - launchAt - 2400) / 3600));
           const ease = k * k;
           ctx.globalAlpha = 1;
           if (ease < 1) {
@@ -3705,6 +3685,160 @@
         window.addEventListener('resize', resize);
         gameCanvas.classList.remove('opacity-0');
         loop();
+      }
+
+      // ---- Cena da abertura: zoom numa base de lançamento na Terra (prédios, hangares no deserto, torre),
+      // ignição com fumaça, decolagem com a câmera subindo pelas nuvens e o céu sumindo até o espaço ----
+      function initIntroScene() {
+        const cv = document.getElementById('intro-cv'), ctx = cv.getContext('2d');
+        const PX = 3;
+        let w = 0, h = 0;
+        const resize = () => { w = cv.width = Math.ceil(innerWidth / PX); h = cv.height = Math.ceil(innerHeight / PX); };
+        resize();
+        addEventListener('resize', resize);
+
+        // Foguete (inspirado na referência: corpo creme, bico laranja, janela redonda, aletas vermelhas)
+        const ROCKET = [
+          '........K........', '........K........', '.......KOK.......', '......KOOOK......', '......KOLOK......', '.....KOLOOSK.....',
+          '.....KYLYYSK.....', '....KYLYYYYSK....', '....KYLYYYYSK....', '....KLYKKKYSK....', '....KLKWBBKSK....', '....KLKBBBKSK....',
+          '....KLKBBBKSK....', '....KLYKKKYSK....', '....KLYYYYYSK....', '....KLYYOYYSK....', '....KLYOBOYSK....', '....KLYYOYYSK....',
+          '....KLYYYYYSK....', '....KOOOOOOOK....', '....KLYYYYYSK....', '....KLYYYYYSK....', '...RKLYYYYYSKR...', '..RRKLYYRYYSKRR..',
+          '.RRRKLYYRYYSKDRR.', '.RRRKLYYRYYSKDDR.', 'KRRRKLYYRYYSKDDRK', 'KRRDKSSSRSSSKDDDK', 'KRDDKKGGRGGKKDDDK', 'KDDK.KGGRGGK.KDDK',
+          'KKK..KGGGGGK..KKK', '.....KKGGGKK.....', '......KGGGK......'
+        ];
+        const RC = { K: '#4a2418', Y: '#f2c25a', L: '#ffe7a3', S: '#d99a3c', O: '#ee7b35', R: '#d9472b', D: '#99301f', B: '#7fa7c4', W: '#e8f4ff', G: '#8a8a96' };
+        const RS = 2; // cada pixel do desenho = 2x2 na cena
+        const rk = document.createElement('canvas');
+        rk.width = 17 * RS; rk.height = ROCKET.length * RS;
+        const rkc = rk.getContext('2d');
+        ROCKET.forEach((r, y) => [...r].forEach((c, x) => { if (RC[c]) { rkc.fillStyle = RC[c]; rkc.fillRect(x * RS, y * RS, RS, RS); } }));
+
+        const rect = (x, y, ww, hh, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), Math.round(ww), Math.round(hh)); };
+        const circle = (x, y, r, col, shade) => { for (let dy = -r; dy <= r; dy++) { const hw = Math.round(Math.sqrt(r * r - dy * dy)); rect(x - hw, y + dy, hw * 2, 1, col); if (shade) rect(x + hw * 0.4, y + dy, hw * 0.6, 1, shade); } };
+        // Hangar em meia-lua (estilo Área 51)
+        const hangar = (x, gy, ww, hh) => {
+          for (let i = 0; i < ww; i++) {
+            const t = (i - ww / 2 + 0.5) / (ww / 2), hy = Math.round(hh * Math.sqrt(Math.max(0, 1 - t * t)));
+            rect(x + i, gy - hy, 1, hy, i % 6 === 0 ? '#8f8778' : t < 0 ? '#cfc8b9' : '#aaa292');
+          }
+          rect(x + ww * 0.3, gy - hh * 0.55, ww * 0.4, hh * 0.55, '#3f3a45');
+        };
+        const SKY = ['#2b5aa8', '#3567b3', '#4176bf', '#4f86c9', '#6198d3', '#76aadb', '#8dbce4', '#a7cfee'];
+        const smoke = [];
+        let frame = 0;
+
+        function draw() {
+          if (!document.getElementById('intro')) return; // abertura acabou
+          requestAnimationFrame(draw);
+          frame++;
+          const t = launchAt === null ? -1 : performance.now() - launchAt;
+          const cx = Math.round(w / 2), gy = Math.round(h * 0.8);
+          // Subida do foguete (acelera) e câmera que acompanha quando ele passa da metade da tela
+          const rise = t < 900 ? 0 : h * 1.6 * Math.pow((t - 900) / 2600, 2);
+          const rocketWorld = gy - 6 - rise;
+          const camY = Math.max(0, h * 0.62 - rocketWorld);
+          const skyA = 1 - Math.min(1, Math.max(0, (t - 2400) / 1600));
+          ctx.clearRect(0, 0, w, h);
+
+          // Céu em faixas (some aos poucos e revela as estrelas, a Terra e Marte do fundo)
+          if (skyA > 0) {
+            ctx.globalAlpha = skyA;
+            SKY.forEach((c, i) => { const y0 = Math.floor(i * h / SKY.length); rect(0, y0, w, Math.floor((i + 1) * h / SKY.length) - y0, c); });
+          }
+          ctx.globalAlpha = 1;
+          const Y = y => y + camY; // mundo -> tela
+
+          if (Y(gy - 140) < h) {
+            // Montanhas do deserto ao fundo
+            for (let x = 0; x < w; x++) {
+              const mh = Math.round(14 + 9 * Math.sin(x * 0.045) + 5 * Math.sin(x * 0.13 + 1));
+              rect(x, Y(gy - mh), 1, mh, '#b9825a');
+              rect(x, Y(gy - mh), 1, 1, '#cf9a70');
+            }
+            // Chão de areia com pedrinhas e a pista
+            rect(0, Y(gy), w, h, '#c98f55');
+            rect(0, Y(gy), w, 2, '#e0aa6c');
+            for (let i = 0; i < 70; i++) rect((i * 37) % w, Y(gy + 4 + (i * 13) % 40), 2, 1, '#a8703f');
+            rect(0, Y(gy + 12), w, 9, '#55505b');
+            for (let x = 0; x < w; x += 14) rect(x, Y(gy + 16), 7, 1, '#e8e8e8');
+
+            // Hangares (Área 51)
+            hangar(cx - 290, Y(gy), 46, 20); hangar(cx - 236, Y(gy), 46, 20); hangar(cx + 150, Y(gy), 52, 22);
+            // Prédio de montagem gigante, com bandeira listrada e portão alto
+            const vx = cx - 170;
+            rect(vx, Y(gy - 118), 76, 118, '#d7dde3');
+            for (let i = 6; i < 76; i += 7) rect(vx + i, Y(gy - 118), 1, 118, '#bcc4cc');
+            rect(vx + 70, Y(gy - 118), 6, 118, '#aeb7c0');
+            rect(vx, Y(gy - 118), 76, 3, '#f2f5f8');
+            rect(vx + 26, Y(gy - 98), 26, 98, '#5b636d');
+            for (let i = 4; i < 98; i += 6) rect(vx + 26, Y(gy - 98 + i), 26, 1, '#4b525b');
+            rect(vx + 6, Y(gy - 110), 12, 9, '#2f56a8');
+            for (let i = 0; i < 9; i++) rect(vx + 18, Y(gy - 110 + i), 16, 1, i % 2 ? '#f4f4f4' : '#c0392b');
+            // Torre de controle com vidro e luz piscando
+            const tx = cx - 74;
+            rect(tx, Y(gy - 60), 6, 60, '#cfd2d6');
+            rect(tx - 6, Y(gy - 74), 18, 14, '#59616b');
+            rect(tx - 5, Y(gy - 72), 16, 6, '#7fd3ff');
+            rect(tx - 7, Y(gy - 76), 20, 2, '#e6e9ec');
+            rect(tx + 2, Y(gy - 86), 1, 10, '#9aa0a8');
+            if ((frame >> 5) % 2) rect(tx + 1, Y(gy - 88), 3, 2, '#ff3b30');
+            // Antena de radar
+            rect(cx - 104, Y(gy - 14), 3, 14, '#9aa0a8');
+            rect(cx - 112, Y(gy - 20), 19, 3, '#e6e9ec'); rect(cx - 109, Y(gy - 23), 13, 3, '#e6e9ec'); rect(cx - 104, Y(gy - 26), 3, 3, '#e6e9ec');
+            // Tanques esféricos de combustível
+            circle(cx + 78, Y(gy - 16), 10, '#eef1f4', '#c9d0d7'); rect(cx + 70, Y(gy - 8), 2, 8, '#9aa0a8'); rect(cx + 85, Y(gy - 8), 2, 8, '#9aa0a8');
+            circle(cx + 108, Y(gy - 12), 7, '#eef1f4', '#c9d0d7');
+            // Plataforma de lançamento e torre de serviço vermelha
+            rect(cx - 32, Y(gy - 6), 64, 6, '#8d8a93');
+            rect(cx - 32, Y(gy - 6), 64, 1, '#b5b2ba');
+            rect(cx - 9, Y(gy - 6), 18, 3, '#3b3640');
+            const gx = cx + 22, gt = gy - 6 - 86;
+            rect(gx, Y(gt), 2, 86, '#c0392b'); rect(gx + 10, Y(gt), 2, 86, '#c0392b');
+            for (let yy = 0; yy < 86; yy += 8) {
+              rect(gx, Y(gt + yy), 12, 1, '#c0392b');
+              for (let i = 0; i < 8; i++) rect(gx + 2 + i, Y(gt + yy + i), 1, 1, '#8e2a20');
+            }
+            if (t < 900) { rect(cx + 8, Y(gt + 24), 14, 2, '#8e2a20'); rect(cx + 8, Y(gt + 50), 14, 2, '#8e2a20'); } // braços soltam na decolagem
+            if ((frame >> 5) % 2 === 0) rect(gx + 4, Y(gt - 3), 4, 3, '#ff3b30');
+          }
+
+          // Nuvens que passam durante a subida (somem junto com o céu)
+          ctx.globalAlpha = skyA;
+          [[-0.3, -0.45, 46], [0.22, -0.95, 62], [-0.42, -1.4, 52], [0.3, -1.85, 70]].forEach(([fx, fy, cw]) => {
+            const x = cx + fx * w, y = Y(gy + fy * h);
+            if (y < -20 || y > h + 20) return;
+            rect(x, y, cw, 7, '#ffffff'); rect(x + cw * 0.15, y - 5, cw * 0.45, 5, '#ffffff'); rect(x + cw * 0.5, y - 9, cw * 0.3, 9, '#ffffff');
+            rect(x, y + 6, cw, 2, '#d6e4f2');
+          });
+
+          // Fumaça da ignição (fica no chão e se espalha)
+          if (t > 150 && t < 2600) for (let i = 0; i < 3; i++) smoke.push({ x: cx + (Math.random() - 0.5) * 10, y: gy - 5, vx: (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 1.4), vy: -0.05 - Math.random() * 0.25, r: 5, life: 0 });
+          for (let i = smoke.length - 1; i >= 0; i--) {
+            const p = smoke[i];
+            p.x += p.vx; p.y += p.vy; p.vx *= 0.985; p.r += 0.3; p.life++;
+            if (p.life > 200) { smoke.splice(i, 1); continue; }
+            ctx.globalAlpha = Math.min(0.9, (200 - p.life) / 90);
+            rect(p.x - p.r, Y(p.y - p.r), p.r * 2, p.r * 2, p.life % 3 ? '#e9e4e6' : '#cfc8cc');
+          }
+          ctx.globalAlpha = 1;
+
+          // Foguete: tremida na ignição, sobe e no espaço acelera para fora da tela rumo a Marte
+          let rx = cx - rk.width / 2, ry = rocketWorld + camY;
+          if (t > 0 && t < 1400) rx += frame % 2 ? 1 : -1;
+          if (t > 4300) { const e = h * 1.6 * Math.pow((t - 4300) / 1600, 2); ry -= e; rx += e * 0.35; }
+          if (ry > -rk.height - 40) {
+            if (t > 0) { // chama em camadas (laranja por fora, amarela por dentro), piscando
+              const fl = (t < 900 ? 6 + t / 900 * 14 : 24) + Math.random() * 6, fx = rx + rk.width / 2;
+              for (let i = 0; i < fl; i++) {
+                const ww = Math.max(1, Math.round(12 * (1 - i / fl)));
+                rect(fx - ww / 2 - 2, ry + i, ww + 4, 1, i > fl * 0.7 ? '#ff5a1f' : '#ff9a2e');
+                rect(fx - ww / 2, ry + i, ww, 1, i < fl * 0.45 ? '#fff6c2' : '#ffd23f');
+              }
+            }
+            ctx.drawImage(rk, Math.round(rx), Math.round(ry - rk.height));
+          }
+        }
+        draw();
       }
 
       // -------------------------------------------------------------
@@ -4045,10 +4179,6 @@
         const rocketImg = document.createElement('canvas');
         rocketImg.width = 17 * ROCKET_PX; rocketImg.height = ROCKET_MAP.length * ROCKET_PX;
         const rctx = rocketImg.getContext('2d');
-        setTimeout(() => { // o mesmo foguete e a mesma estação de pouso aparecem na abertura
-          document.getElementById('intro-rocket-img').src = rocketImg.toDataURL();
-          document.getElementById('intro-pad-img').src = SPRITE_SOURCES.landing;
-        });
         ROCKET_MAP.forEach((row, y) => [...row].forEach((ch, x) => {
           if (ROCKET_PAL[ch]) { rctx.fillStyle = ROCKET_PAL[ch]; rctx.fillRect(x * ROCKET_PX, y * ROCKET_PX, ROCKET_PX, ROCKET_PX); }
         }));
@@ -4362,6 +4492,7 @@
       refreshMenuContinue();
       renderSettingsUI();
       initSpaceBackground();
+      initIntroScene();
       initColonyRenderer();
       renderTopAlertBar();
       renderHUD();
