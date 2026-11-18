@@ -19,6 +19,7 @@ O link antigo, `Orbit_Explorer_BETA.html`, continua funcionando e abre o mesmo j
 - **Radiação progressiva:** sobe +20% por nível da base e, depois de 4 minutos de jogo, +10% por minuto, até dobrar. Assim os níveis altos continuam desafiadores.
 - **Base principal mais exigente:** cada nível pede mais prédios. Do nível 2 em diante, ela também pede prédios coloridos da cor do nível (azul no 2, verde no 3, roxo no 4) de Ice Drill, Farm Tunnel, Oxygen Generator, Power Plant e Science Lab.
 - **Ranking com astronautas:** além do tempo, a tabela mostra quantos astronautas a base chegou a ter, para incentivar manter mais gente viva.
+- **Celular:** a Árvore encolhe para caber inteira na tela, e no iPhone tocar rápido não dá mais zoom.
 
 ## Organização da pasta
 | Item | O que é |

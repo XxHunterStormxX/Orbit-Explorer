@@ -2,7 +2,7 @@
 <html class="dark" lang="en">
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" name="viewport">
   <title>Orbit Explorer</title>
   <link href="https://fonts.googleapis.com" rel="preconnect">
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
@@ -409,6 +409,20 @@
     .tier-cols::before { background: var(--tier); }
     .tree-tier.locked + .tier-cols::before { background: #4b4458; }
     .tier-tag { color: var(--res); font-weight: 700; }
+    /* iPhone: toque rápido não dá zoom */
+    html, body, button { touch-action: manipulation; }
+    @media (max-width: 640px) {
+      .tree-cols { min-width: 0; gap: 4px; }
+      .tree-col { min-width: 0; gap: 18px; }
+      .tree-node { padding: 4px 2px; font-size: 9px; border-width: 2px; overflow-wrap: anywhere; }
+      .tree-node::before { top: -21px; height: 18px; }
+      .tree-node small { font-size: 8px; }
+      .tree-img { height: 32px; }
+      .tree-img img { max-height: 32px; max-width: 100%; }
+      .tree-img .lock-ico { width: 14px; height: 18px; right: -6px; }
+      .tree-cost { padding: 1px 3px; }
+      .tree-tier { font-size: 11px; padding: 4px 8px; }
+    }
     .tree-node.done { background:color-mix(in srgb, var(--res) 18%, #1d1726); }
     .tree-node.ready { animation: tree-pulse 1.4s ease-in-out infinite; cursor:pointer; }
     .tree-node.locked { border-color:#4b4458; }
