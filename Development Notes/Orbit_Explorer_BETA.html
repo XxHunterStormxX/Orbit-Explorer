@@ -433,6 +433,14 @@
     .net-ico { position: relative; flex-shrink: 0; }
     .net-ico .material-symbols-outlined { font-size: 44px; color: #fbbf24; }
     .net-ico::after { content: ''; position: absolute; left: -4px; right: -4px; top: 50%; height: 5px; margin-top: -2px; background: #ff4d4d; transform: rotate(-45deg); box-shadow: 0 0 0 2px #0b0b0f; }
+    #net-lock { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 16px; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .5) 0 2px, transparent 2px 4px), var(--tv-noise) 0 0 / 256px 256px, #222; image-rendering: pixelated; animation: tv-noise .2s steps(1) infinite; }
+    #net-lock[hidden] { display: none; }
+    .lock-box { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(480px, 100%); padding: 22px 18px; background: #0b0b0f; border: 3px solid #ff4d4d; box-shadow: 8px 8px 0 #000; color: #fff; text-align: center; font-size: 15px; line-height: 1.35; }
+    .lock-box .net-ico .material-symbols-outlined { font-size: 64px; }
+    .lock-title { color: #ff4d4d; font-family: 'Press Start 2P', monospace; font-size: 20px; animation: rad-blink .8s steps(2) infinite; }
+    .lock-saved { color: #34d399; font-weight: 700; }
+    #lock-time { font-family: 'Press Start 2P', monospace; font-size: 34px; color: #fbbf24; text-shadow: 3px 3px 0 #000; }
+    .lock-tip { color: #cbd5e1; font-size: 13px; }
     /* Medidor de radiação */
     .rad-box { display: flex; align-items: center; gap: 8px; flex: 1; padding: 6px 10px; border: 2px solid #6bfa05; border-radius: 12px; background: repeating-linear-gradient(-45deg, rgba(251, 191, 36, .1) 0 8px, transparent 8px 16px), #14110a; }
     .rad-ico { color: #6bfa05; font-size: 24px !important; }
@@ -525,6 +533,17 @@
 
   <!-- SINAL PERDIDO: depois de 1 hora de jogo a tela chia como TV antiga de vez em quando -->
   <div hidden id="tv-static"></div>
+  <div hidden id="net-lock">
+    <div class="lock-box">
+      <span class="net-ico"><span class="material-symbols-outlined">cell_tower</span></span>
+      <b class="lock-title">SIGNAL LOST</b>
+      <p id="lock-msg"></p>
+      <p class="lock-saved">✔ Your progress was saved!</p>
+      <p>The base reconnects with Earth in</p>
+      <div id="lock-time">30:00</div>
+      <p class="lock-tip">You played for 1 hour. Time for a break: drink some water, stretch and rest your eyes!</p>
+    </div>
+  </div>
   <div class="hidden" id="net-alert">
     <span class="net-ico"><span class="material-symbols-outlined">cell_tower</span></span>
     <div><b>SIGNAL LOST</b><span id="net-alert-text"></span></div>
@@ -2255,6 +2274,9 @@
         ['OUTPOST', 'POSTO AVANÇADO', 'PUESTO AVANZADO'], ['SETTLEMENT', 'ASSENTAMENTO', 'ASENTAMIENTO'], ['COLONY', 'COLÔNIA', 'COLONIA'], ['CITY', 'CIDADE', 'CIUDAD'], ['METROPOLIS', 'METRÓPOLE', 'METRÓPOLIS']
       ];
       const I18N = [
+        ['✔ Your progress was saved!', '✔ Seu progresso foi salvo!', '✔ ¡Tu progreso fue guardado!'],
+        ['The base reconnects with Earth in', 'A base volta a falar com a Terra em', 'La base se reconecta con la Tierra en'],
+        ['You played for # hour. Time for a break: drink some water, stretch and rest your eyes!', 'Você jogou por # hora. Hora de uma pausa: beba água, se alongue e descanse os olhos!', 'Jugaste # hora. ¡Hora de un descanso: toma agua, estírate y descansa los ojos!'],
         ['SIGNAL LOST', 'SINAL PERDIDO', 'SEÑAL PERDIDA'],
         ['The network is down! Trying to reconnect...', 'A rede caiu! Tentando reconectar...', '¡La red se cayó! Intentando reconectar...'],
         ['The base satellite was hit by an asteroid shower!', 'O satélite da base foi atingido por uma chuva de asteroides!', '¡El satélite de la base fue golpeado por una lluvia de asteroides!'],
@@ -4048,16 +4070,52 @@
         'Houston, we lost you! Repeat, we lost you!',
         'Too much data! The base computer needs a break... and so do you!'
       ];
-      let nextGlitch = 3600;
+      function tvNoise() {
+        const r = document.documentElement.style;
+        if (r.getPropertyValue('--tv-noise')) return;
+        const c = document.createElement('canvas'); c.width = c.height = 128;
+        const g = c.getContext('2d'), d = g.createImageData(128, 128);
+        for (let i = 0; i < d.data.length; i += 4) { d.data[i] = d.data[i + 1] = d.data[i + 2] = Math.random() * 255; d.data[i + 3] = 255; }
+        g.putImageData(d, 0, 0);
+        r.setProperty('--tv-noise', `url(${c.toDataURL()})`);
+      }
+      // Pausa obrigatória: depois de 1 hora jogando, o jogo salva, o sinal cai e a entrada fica bloqueada por 30 minutos.
+      // O tempo jogado soma entre partidas e só zera depois de 30 minutos sem jogar.
+      const LOCK_KEY = 'orbitLock', PLAY_KEY = 'orbitPlay', LOCK_MS = 30 * 60 * 1000;
+      const lockUntil = () => { try { return +localStorage.getItem(LOCK_KEY) || 0; } catch (e) { return 0; } };
+      let play = { sec: 0, last: 0 };
+      try { play = JSON.parse(localStorage.getItem(PLAY_KEY)) || play; } catch (e) {}
+      function countPlay() {
+        if (Date.now() - play.last > LOCK_MS) play.sec = 0;
+        play.sec++; play.last = Date.now();
+        const done = play.sec >= 3600;
+        if (done) play.sec = 0;
+        try { localStorage.setItem(PLAY_KEY, JSON.stringify(play)); if (done) localStorage.setItem(LOCK_KEY, Date.now() + LOCK_MS); } catch (e) {}
+        if (!done) return;
+        saveGame();
+        tvGlitch();
+        setTimeout(() => { returnToMenu(); showLock(); }, 3500);
+      }
+      function showLock() {
+        const el = document.getElementById('net-lock');
+        tvNoise();
+        setText(document.getElementById('lock-msg'), rnd(NET_MSGS));
+        el.hidden = false;
+        let t;
+        const tick = () => {
+          const left = Math.ceil((lockUntil() - Date.now()) / 1000);
+          if (left <= 0) { el.hidden = true; clearInterval(t); return; }
+          setText(document.getElementById('lock-time'), `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`);
+        };
+        t = setInterval(tick, 1000);
+        tick();
+      }
+      // Bloqueado: teclado não funciona e, ao abrir o jogo, a tela de bloqueio já aparece
+      window.addEventListener('keydown', e => { if (!document.getElementById('net-lock').hidden) { e.stopPropagation(); e.preventDefault(); } }, true);
+      setTimeout(() => { if (lockUntil() > Date.now()) showLock(); });
       function tvGlitch() {
         const st = document.getElementById('tv-static'), box = document.getElementById('net-alert');
-        if (!st.style.getPropertyValue('--tv-noise')) {
-          const c = document.createElement('canvas'); c.width = c.height = 128;
-          const g = c.getContext('2d'), d = g.createImageData(128, 128);
-          for (let i = 0; i < d.data.length; i += 4) { d.data[i] = d.data[i + 1] = d.data[i + 2] = Math.random() * 255; d.data[i + 3] = 255; }
-          g.putImageData(d, 0, 0);
-          st.style.setProperty('--tv-noise', `url(${c.toDataURL()})`);
-        }
+        tvNoise();
         setText(document.getElementById('net-alert-text'), rnd(NET_MSGS));
         st.hidden = false; box.classList.remove('hidden'); document.body.classList.add('tv-glitch');
         sfxNotes([[3500, 0, 3.2, 'noise', .22, 2500], [1200, .4, .25, 'square', .03], [900, 1.6, .2, 'square', .03]]);
@@ -4068,8 +4126,7 @@
         if (S.isGameOver || inMenu || eventAlertOpen || gamePaused || settingsOpen) return;
 
         S.secondsAlive++;
-        if (S.secondsAlive < 3600) nextGlitch = 3600;
-        else if (S.secondsAlive >= nextGlitch) { nextGlitch = S.secondsAlive + 25 + Math.floor(Math.random() * 35); tvGlitch(); }
+        countPlay();
         const diff = getDifficultyPhase();
         const drainMult = getModeDrainMultiplier();
 
