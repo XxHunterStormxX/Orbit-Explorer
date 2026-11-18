@@ -273,8 +273,11 @@
       /* Vida na linha inteira; tripulação e controles embaixo */
       .hud-top { flex-wrap: wrap; gap: 6px !important; }
       #hud-health-box { flex: 1 1 100% !important; padding: 4px 10px !important; }
-      .hud-top > div:nth-child(2) { flex: 1 1 auto; padding: 4px 10px !important; }
-      .hud-top > div:nth-child(3) { padding: 2px !important; }
+      #card-hud-rad { flex: 1 1 100%; padding: 3px 10px; }
+      #card-hud-rad .rad-ico { font-size: 20px !important; }
+      #card-hud-rad .rad-track { height: 12px; }
+      #hud-pop-box { flex: 1 1 auto; padding: 4px 10px !important; }
+      .hud-top > div:last-child { padding: 2px !important; }
       .hud-top button { width: 32px !important; height: 32px !important; }
       /* Recursos: 3 colunas; só o ícone colorido no lugar do nome */
       .hud-res > div { padding: 5px 6px !important; }
@@ -412,6 +415,19 @@
     .tier-cols::before { background: var(--tier); }
     .tree-tier.locked + .tier-cols::before { background: #4b4458; }
     .tier-tag { color: var(--res); font-weight: 700; }
+    /* Medidor de radiação */
+    .rad-box { display: flex; align-items: center; gap: 8px; flex: 1; padding: 6px 10px; border: 2px solid #6bfa05; border-radius: 12px; background: repeating-linear-gradient(-45deg, rgba(251, 191, 36, .1) 0 8px, transparent 8px 16px), #14110a; }
+    .rad-ico { color: #6bfa05; font-size: 24px !important; }
+    .rad-name { color: #6bfa05; }
+    .rad-track { flex: 1; height: 16px; position: relative; background: linear-gradient(90deg, #34d399, #fbbf24 55%, #ff4d4d); border: 2px solid #000; }
+    .rad-track::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), #000 calc(10% - 2px) 10%); }
+    #bar-rad { position: absolute; top: 0; right: 0; bottom: 0; background: #1c1a24; transition: width .2s; }
+    .rad-num { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; min-width: 46px; }
+    .rad-num b { color: #fff; font-size: 15px; }
+    .rad-num small { font-size: 10px; }
+    .rad-box.hot { border-color: #ff4d4d; animation: rad-hot 1s steps(2) infinite; }
+    .rad-box.hot .rad-ico, .rad-box.hot .rad-name { color: #ff4d4d; }
+    @keyframes rad-hot { 50% { box-shadow: 0 0 0 3px rgba(255, 77, 77, .5); } }
     /* iPhone: toque rápido não dá zoom */
     #game-body { min-height: 100dvh; } /* altura real da tela no iPhone: as abas de baixo aparecem sem rolar */
     html, body, button { touch-action: manipulation; }
@@ -657,6 +673,13 @@
           </div>
           <span class="text-base w-12 text-right"><span class="font-bold text-[#05fa5b]" id="hud-health-pct">100%</span></span>
         </div>
+        <!-- MEDIDOR DE RADIAÇÃO: não é recurso, é um perigo (estilo contador Geiger) -->
+        <div class="rad-box" id="card-hud-rad" title="Radiation: turn on the Shield to lower it. Too high hurts the crew!">
+          <span class="material-symbols-outlined rad-ico">radiology</span>
+          <span class="hidden sm:inline text-sm font-bold rad-name">Radiation</span>
+          <div class="rad-track"><div id="bar-rad" style="width: 90%;"></div></div>
+          <span class="rad-num"><b id="val-rad">10</b><small class="font-bold" id="rate-rad">+0.2/s</small></span>
+        </div>
         <div class="bg-surface-low border border-surface-border px-3 py-2 rounded-xl flex items-center gap-1.5 text-sm" id="hud-pop-box">
           <span class="material-symbols-outlined text-purple text-[20px]">group</span>
           <span class="font-bold text-white"><span id="hud-pop">2</span>/<span id="hud-pop-cap">5</span></span>
@@ -694,7 +717,7 @@
       </div>
 
       <!-- OS 5 RECURSOS ESSENCIAIS (SEMPRE VISÍVEIS) + PESQUISA CIENTÍFICA -->
-      <div class="hud-res grid grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2 font-mono-code">
+      <div class="hud-res grid grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2 font-mono-code">
         <!-- 1. ÁGUA -->
         <div class="bg-surface-card/75 backdrop-blur-sm border border-surface-border/80 rounded-xl p-2 transition duration-150" id="card-hud-water">
           <div class="flex items-center justify-between text-[11px] mb-0.5">
@@ -760,23 +783,6 @@
           </div>
           <div class="w-full h-2 bg-surface-high border border-surface-border/60 rounded-full overflow-hidden mt-1.5">
             <div class="h-full bg-energy transition-all duration-200" id="bar-energy" style="width: 48%;"></div>
-          </div>
-        </div>
-
-        <!-- 5. RADIAÇÃO AMBIENTAL ACUMULADA -->
-        <div class="bg-surface-card border border-surface-border/80 rounded-xl p-2 transition duration-150" id="card-hud-rad">
-          <div class="flex items-center justify-between text-[11px] mb-0.5">
-            <span class="flex items-center gap-1 text-rad font-bold">
-              <span class="material-symbols-outlined text-[15px]">radiology</span> Radiation
-            </span>
-            <span class="text-[10px] font-bold text-rose-400" id="rate-rad">+0.2/s</span>
-          </div>
-          <div class="flex items-baseline justify-between">
-            <span class="text-base sm:text-lg font-bold text-white tracking-tight" id="val-rad">10</span>
-            <span class="text-[10px] text-neutral-400">/ 100 max</span>
-          </div>
-          <div class="w-full h-2 bg-surface-high border border-surface-border/60 rounded-full overflow-hidden mt-1.5">
-            <div class="h-full bg-rad transition-all duration-200" id="bar-rad" style="width: 10%;"></div>
           </div>
         </div>
 
@@ -4300,7 +4306,8 @@
         crewAlert.classList.toggle('hidden', inMenu || S.isGameOver || S.population < S.capPop);
         setText(document.getElementById('crew-alert-text'), overcrowd() ? 'OVERCROWDED!' : 'BASE FULL');
         crewAlert.style.top = `${parseFloat(radAlert.style.top) + (radAlert.classList.contains('hidden') ? 0 : radAlert.offsetHeight + 10)}px`;
-        document.getElementById('bar-rad').style.width = `${Math.min(100, S.radiation)}%`;
+        document.getElementById('bar-rad').style.width = `${100 - Math.min(100, S.radiation)}%`;
+        document.getElementById('card-hud-rad').classList.toggle('hot', S.radiation >= 75);
 
         setText(document.getElementById('val-sci'), Math.round(S.science));
         setText(document.getElementById('build-sci-disp'), `${Math.round(S.science)} Science`);
