@@ -288,10 +288,13 @@
       main { padding: 8px !important; gap: 8px !important; }
       .click-card { padding: 7px 8px !important; }
       .click-card > div:first-child > div:last-child { display: none; }
-      .click-card .w-10 { width: 26px; height: 26px; }
-      .click-card .mt-3 { margin-top: 4px; }
-      .click-card h3.text-sm { font-size: 13px !important; }
-      .click-card p.text-xs { font-size: 11px !important; margin-top: 0; }
+      .click-card { display: block !important; }
+      .click-card > div:first-child { float: right; width: auto !important; margin: 0 0 2px 4px; }
+      .click-card .w-14 { width: 24px; height: 24px; border-radius: 5px; }
+      .click-card .w-14 .material-symbols-outlined { font-size: 17px !important; }
+      .click-card .mt-3 { margin-top: 0; }
+      .click-card h3.text-sm { font-size: 12px !important; }
+      .click-card p.text-xs { font-size: 10px !important; margin-top: 0; }
       .shield-btn { padding: 4px 8px; gap: 6px; }
       .shield-info { display: none; }
       .shield-btn-icon { font-size: 22px !important; }
@@ -410,6 +413,7 @@
     .tree-tier.locked + .tier-cols::before { background: #4b4458; }
     .tier-tag { color: var(--res); font-weight: 700; }
     /* iPhone: toque rápido não dá zoom */
+    #game-body { min-height: 100dvh; } /* altura real da tela no iPhone: as abas de baixo aparecem sem rolar */
     html, body, button { touch-action: manipulation; }
     @media (max-width: 640px) {
       .tree-cols { min-width: 0; gap: 4px; }
